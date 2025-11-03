@@ -7,6 +7,22 @@
 # ============================================================================
 # VÉRIFICATION PRIVILÈGES ADMINISTRATEUR (PRIORITAIRE)
 # ============================================================================
+# Contourner les restrictions d'exécution
+Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
+
+# Vérifier et demander les droits administrateur
+function Require-Admin {
+    $currentUser = [System.Security.Principal.WindowsIdentity]::GetCurrent()
+    $principal = New-Object System.Security.Principal.WindowsPrincipal($currentUser)
+    
+    if (-not $principal.IsInRole([System.Security.Principal.WindowsBuiltInRole]::Administrator)) {
+        Write-Host "Ce script nécessite les droits administrateur. Redémarrage..." -ForegroundColor Red
+        Start-Process powershell.exe -ArgumentList "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`"" -Verb RunAs
+        exit
+    }
+}
+
+Require-Admin
 
 $currentUser = [Security.Principal.WindowsIdentity]::GetCurrent()
 $principal = New-Object Security.Principal.WindowsPrincipal($currentUser)

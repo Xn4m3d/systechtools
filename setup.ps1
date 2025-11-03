@@ -3,6 +3,8 @@
 # À exécuter sur ton PC source (admin)
 # Génère le menu-selector.ps1 avec les URLs GitHub RAW
 # ============================================================================
+# Contourner les restrictions d'exécution
+Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 
 Write-Host "╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
 Write-Host "║     GÉNÉRATEUR DE MENU - GITHUB RAW URLs                      ║" -ForegroundColor Cyan
