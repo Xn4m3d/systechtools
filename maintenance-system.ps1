@@ -38,14 +38,6 @@ function Write-LogEntry {
     }
 }
 
-function Get-UserConfirmation {
-    param([string]$Message, [bool]$AutoMode = $false)
-    if ($AutoMode) { return $true }
-    Write-Host "`n$Message" -ForegroundColor Yellow
-    $response = Read-Host "Continuer? (O/N)"
-    return ($response -eq "O" -or $response -eq "o")
-}
-
 function Invoke-CommandSafely {
     param([scriptblock]$Command, [string]$Description = "Commande systeme")
     try {
@@ -71,7 +63,6 @@ function Clean-TemporaryFiles {
         "$env:TEMP\\*"
     )
     
-    $totalFreed = 0
     foreach ($path in $tempPaths) {
         if (Test-Path -Path $path) {
             try {
@@ -84,8 +75,7 @@ function Clean-TemporaryFiles {
                     $freedGB = [math]::Round($size / 1GB, 2)
                     $msg = "Espace libere: $freedGB GB"
                     Write-LogEntry $msg "SUCCESS"
-                    $totalFreed += $size
-                    $global:actionsPerformed += "Nettoyage: $freedGB GB"
+                    $global:actionsPerformed += "Nettoyage Temp: $freedGB GB"
                 }
             }
             catch {
@@ -101,26 +91,62 @@ function Clean-WindowsUpdate {
     Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" -ForegroundColor Green
     
     Write-LogEntry "Arret services Windows Update..." "ACTION"
-    Stop-Service -Name wuauserv -Force -ErrorAction SilentlyContinue
-    Stop-Service -Name bits -Force -ErrorAction SilentlyContinue
+    net stop wuauserv 2>&1 | Out-Null
+    net stop bits 2>&1 | Out-Null
     Write-LogEntry "Services arretes" "SUCCESS"
     
     Start-Sleep -Seconds 2
     
-    $cacheDir = "C:\\Windows\\SoftwareDistribution\\Download"
+    $cacheDir = "C:\\Windows\\SoftwareDistribution"
     if (Test-Path $cacheDir) {
-        $items = Get-ChildItem -Path $cacheDir -Recurse -Force -ErrorAction SilentlyContinue
-        $size = ($items | Measure-Object -Property Length -Sum).Sum
-        Remove-Item -Path "$cacheDir\\*" -Recurse -Force -ErrorAction SilentlyContinue
-        $freedGB = [math]::Round($size / 1GB, 2)
-        Write-LogEntry "Cache Windows Update vide: $freedGB GB" "SUCCESS"
-        $global:actionsPerformed += "Windows Update Cleanup: $freedGB GB"
+        try {
+            $items = Get-ChildItem -Path $cacheDir -Recurse -Force -ErrorAction SilentlyContinue
+            $size = ($items | Measure-Object -Property Length -Sum).Sum
+            Remove-Item -Path "$cacheDir\\*" -Recurse -Force -ErrorAction SilentlyContinue
+            $freedGB = [math]::Round($size / 1GB, 2)
+            Write-LogEntry "Cache Windows Update vide: $freedGB GB" "SUCCESS"
+            $global:actionsPerformed += "Windows Update Cleanup: $freedGB GB"
+        }
+        catch {
+            Write-LogEntry "Erreur nettoyage Windows Update" "WARNING"
+        }
     }
     
     Write-LogEntry "Redemarrage services..." "ACTION"
-    Start-Service -Name wuauserv -ErrorAction SilentlyContinue
-    Start-Service -Name bits -ErrorAction SilentlyContinue
+    net start wuauserv 2>&1 | Out-Null
+    net start bits 2>&1 | Out-Null
     Write-LogEntry "Services redemarres" "SUCCESS"
+}
+
+function Clean-PrintSpooler {
+    Write-Host "`n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Green
+    Write-Host "NETTOYAGE SPOOL IMPRIMANTE" -ForegroundColor Green
+    Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" -ForegroundColor Green
+    
+    Write-LogEntry "Arret service Spooler..." "ACTION"
+    net stop spooler 2>&1 | Out-Null
+    Write-LogEntry "Service arrete" "SUCCESS"
+    
+    Start-Sleep -Seconds 2
+    
+    $spoolDir = "C:\\Windows\\System32\\spool\\PRINTERS"
+    if (Test-Path $spoolDir) {
+        try {
+            $items = Get-ChildItem -Path $spoolDir -Recurse -Force -ErrorAction SilentlyContinue
+            $size = ($items | Measure-Object -Property Length -Sum).Sum
+            Remove-Item -Path "$spoolDir\\*" -Recurse -Force -ErrorAction SilentlyContinue
+            $freedGB = [math]::Round($size / 1GB, 2)
+            Write-LogEntry "Spool nettoy - $freedGB GB" "SUCCESS"
+            $global:actionsPerformed += "Spool Cleanup: $freedGB GB"
+        }
+        catch {
+            Write-LogEntry "Erreur nettoyage spool" "WARNING"
+        }
+    }
+    
+    Write-LogEntry "Redemarrage service Spooler..." "ACTION"
+    net start spooler 2>&1 | Out-Null
+    Write-LogEntry "Service redemarr" "SUCCESS"
 }
 
 function Clean-RecycleBin {
@@ -141,7 +167,6 @@ function Clean-DiskCleanup {
     
     Write-LogEntry "Lancement Disk Cleanup..." "ACTION"
     $diskCleanupPaths = @(
-        "C:\\Windows\\Temp",
         "C:\\Windows\\Prefetch",
         "C:\\Windows\\System32\\dllcache",
         "C:\\ProgramData\\Package Cache"
@@ -182,7 +207,27 @@ function Repair-WindowsImage {
     
     Write-LogEntry "Lancement DISM RestoreHealth..." "ACTION"
     Invoke-CommandSafely { & DISM /Online /Cleanup-Image /RestoreHealth } "DISM Restore Health"
-    $global:actionsPerformed += "DISM Restore Health"
+    
+    Write-LogEntry "Lancement DISM ComponentCleanup..." "ACTION"
+    Invoke-CommandSafely { & DISM /Online /Cleanup-Image /StartComponentCleanup } "DISM Component Cleanup"
+    
+    $global:actionsPerformed += "DISM Restore Health + ComponentCleanup"
+}
+
+function Repair-AppxPackages {
+    Write-Host "`n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Magenta
+    Write-Host "REPARATION PACKAGES APPX MICROSOFT" -ForegroundColor Magenta
+    Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" -ForegroundColor Magenta
+    
+    Write-LogEntry "Reparation packages AppX..." "ACTION"
+    try {
+        Get-AppXPackage -AllUsers | Repair-AppxPackage -ErrorAction SilentlyContinue
+        Write-LogEntry "Packages AppX repares" "SUCCESS"
+        $global:actionsPerformed += "AppX Packages Repair"
+    }
+    catch {
+        Write-LogEntry "Erreur reparation AppX" "WARNING"
+    }
 }
 
 function Defragment-Drive {
@@ -190,10 +235,25 @@ function Defragment-Drive {
     Write-Host "OPTIMISATION DISQUE" -ForegroundColor Blue
     Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" -ForegroundColor Blue
     
-    Write-LogEntry "Optimisation des lecteurs..." "ACTION"
-    Get-Volume -DriveLetter C -ErrorAction SilentlyContinue | Optimize-Volume -Defrag -Verbose -ErrorAction SilentlyContinue
-    Write-LogEntry "Optimisation terminee" "SUCCESS"
-    $global:actionsPerformed += "Defragmentation"
+    try {
+        $disk = Get-Volume -DriveLetter C -ErrorAction SilentlyContinue
+        $diskInfo = Get-PhysicalDisk | Where-Object { $_.SerialNumber -match $disk.ObjectId }
+        
+        if ($diskInfo.MediaType -eq "SSD") {
+            Write-LogEntry "Disque SSD detecte - Trim au lieu de defrag" "WARNING"
+            Invoke-CommandSafely { & TRIM /Volume:C /Immediate } "TRIM SSD"
+            $global:actionsPerformed += "SSD TRIM"
+        }
+        else {
+            Write-LogEntry "Optimisation disque (HDD)..." "ACTION"
+            $disk | Optimize-Volume -Defrag -Verbose -ErrorAction SilentlyContinue
+            Write-LogEntry "Defragmentation terminee" "SUCCESS"
+            $global:actionsPerformed += "Defragmentation"
+        }
+    }
+    catch {
+        Write-LogEntry "Erreur defragmentation" "WARNING"
+    }
 }
 
 function Clear-EventLogs {
@@ -208,6 +268,115 @@ function Clear-EventLogs {
         Write-LogEntry "Journal $log vide" "SUCCESS"
     }
     $global:actionsPerformed += "Journaux vides"
+}
+
+function Fix-ContextMenu {
+    Write-Host "`n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Blue
+    Write-Host "REPARATION MENU CONTEXTUEL" -ForegroundColor Blue
+    Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" -ForegroundColor Blue
+    
+    Write-LogEntry "Reparation menu contextuel..." "ACTION"
+    try {
+        Invoke-CommandSafely { & reg.exe add "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" /f /ve } "Registry Menu Fix"
+        Write-LogEntry "Redemarrage explorateur..." "ACTION"
+        taskkill /f /im explorer.exe 2>&1 | Out-Null
+        Start-Sleep -Seconds 2
+        start explorer.exe
+        Write-LogEntry "Menu contextuel repare" "SUCCESS"
+        $global:actionsPerformed += "Context Menu Fixed"
+    }
+    catch {
+        Write-LogEntry "Erreur reparation menu" "ERROR"
+    }
+}
+
+function Export-ApplicationsList {
+    Write-Host "`n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Cyan
+    Write-Host "EXPORT LISTE APPLICATIONS" -ForegroundColor Cyan
+    Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" -ForegroundColor Cyan
+    
+    Write-LogEntry "Recuperation liste applications..." "ACTION"
+    try {
+        $desktop = [Environment]::GetFolderPath("Desktop")
+        $filePath = "$desktop\liste_applications.txt"
+        Get-WmiObject -Class Win32_Product | Select-Object -Property Name | Out-File -FilePath $filePath -Encoding UTF8
+        Write-LogEntry "Liste sauvegardee: $filePath" "SUCCESS"
+        $global:actionsPerformed += "Applications List Exported"
+    }
+    catch {
+        Write-LogEntry "Erreur export applications" "ERROR"
+    }
+}
+
+function Show-UserManagementMenu {
+    Write-Host "`n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Yellow
+    Write-Host "GESTION UTILISATEURS ET GROUPES" -ForegroundColor Yellow
+    Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" -ForegroundColor Yellow
+    
+    Write-Host "1. Ajouter utilisateur local"
+    Write-Host "2. Supprimer utilisateur local"
+    Write-Host "3. Activer administrateur"
+    Write-Host "4. Desactiver utilisateur"
+    Write-Host "5. Changer mot de passe utilisateur"
+    Write-Host "6. Voir utilisateurs connectes"
+    Write-Host "0. Retour"
+    Write-Host ""
+    
+    $choice = Read-Host "Choisissez une option"
+    
+    switch ($choice) {
+        "1" {
+            $username = Read-Host "Nom utilisateur"
+            $password = Read-Host "Mot de passe" -AsSecureString
+            Write-LogEntry "Creation utilisateur $username..." "ACTION"
+            net user $username $password /add 2>&1 | Out-Null
+            Write-LogEntry "Utilisateur $username cre" "SUCCESS"
+        }
+        "2" {
+            $username = Read-Host "Nom utilisateur a supprimer"
+            Write-LogEntry "Suppression utilisateur $username..." "ACTION"
+            net user $username /delete 2>&1 | Out-Null
+            Write-LogEntry "Utilisateur $username supprim" "SUCCESS"
+        }
+        "3" {
+            $username = Read-Host "Nom utilisateur"
+            Write-LogEntry "Ajout groupe Administrateurs..." "ACTION"
+            net localgroup Administrateurs $username /add 2>&1 | Out-Null
+            Write-LogEntry "Utilisateur $username admin" "SUCCESS"
+        }
+        "4" {
+            $username = Read-Host "Nom utilisateur"
+            Write-LogEntry "Desactivation utilisateur..." "ACTION"
+            net user $username /active:no 2>&1 | Out-Null
+            Write-LogEntry "Utilisateur $username dsactiv" "SUCCESS"
+        }
+        "5" {
+            $username = Read-Host "Nom utilisateur"
+            $newpass = Read-Host "Nouveau mot de passe" -AsSecureString
+            Write-LogEntry "Changement mot de passe $username..." "ACTION"
+            net user $username $newpass 2>&1 | Out-Null
+            Write-LogEntry "Mot de passe chang" "SUCCESS"
+        }
+        "6" {
+            Write-LogEntry "Utilisateurs connectes:" "INFO"
+            query user
+        }
+        "0" { return }
+    }
+}
+
+function Launch-MassGravel {
+    Write-Host "`n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Red
+    Write-Host "LANCEMENT MASS GRAVEL (ACTIVATION WINDOWS)" -ForegroundColor Red
+    Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" -ForegroundColor Red
+    
+    $confirm = Read-Host "Vous etes sur? (O/N)"
+    if ($confirm -eq "O" -or $confirm -eq "o") {
+        Write-LogEntry "Lancement Mass Gravel..." "ACTION"
+        Start-Process powershell.exe -ArgumentList "irm https://get.activated.win | iex" -Verb RunAs
+        Write-LogEntry "Mass Gravel lanc dans une nouvelle fentre" "SUCCESS"
+        $global:actionsPerformed += "Mass Gravel Launched"
+    }
 }
 
 function Generate-Report {
@@ -230,33 +399,41 @@ function Generate-Report {
         }
     }
     
-    Write-Host "`nDuree: $($duration.Minutes) min $($duration.Seconds) sec" -ForegroundColor Yellow
+    Write-Host "`nDure: $($duration.Minutes) min $($duration.Seconds) sec" -ForegroundColor Yellow
     Write-Host ""
 }
 
 function Show-Menu {
     Write-Host "`n╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-    Write-Host "║                  MAINTENANCE SYSTEME                           ║" -ForegroundColor Cyan
+    Write-Host "║                  MAINTENANCE SYSTEME v2.1                      ║" -ForegroundColor Cyan
     Write-Host "╚════════════════════════════════════════════════════════════════╝`n" -ForegroundColor Cyan
     
     Write-Host "NETTOYAGE:" -ForegroundColor Green
     Write-Host "  1. Fichiers temporaires"
     Write-Host "  2. Cache Windows Update"
-    Write-Host "  3. Corbeille"
-    Write-Host "  4. Disk Cleanup"
-    Write-Host "  5. AUTO - Tous les nettoyages"
+    Write-Host "  3. Spool Imprimante"
+    Write-Host "  4. Corbeille"
+    Write-Host "  5. Disk Cleanup"
+    Write-Host "  6. AUTO - Tous les nettoyages"
     
     Write-Host "`nREPARATION:" -ForegroundColor Magenta
-    Write-Host "  6. SFC (Reparation fichiers)"
-    Write-Host "  7. DISM (Reparation image)"
-    Write-Host "  8. AUTO - Toutes les reparations"
+    Write-Host "  7. SFC (Reparation fichiers)"
+    Write-Host "  8. DISM (Reparation image + Component)"
+    Write-Host "  9. Packages AppX"
+    Write-Host " 10. AUTO - Toutes les reparations"
     
     Write-Host "`nOPTIMISATION:" -ForegroundColor Blue
-    Write-Host "  9. Defragmentation disque"
-    Write-Host " 10. Journaux d'evenements"
+    Write-Host " 11. Defragmentation (HDD) ou TRIM (SSD)"
+    Write-Host " 12. Journaux d'evenements"
+    Write-Host " 13. Menu contextuel"
+    Write-Host " 14. Export liste applications"
     
-    Write-Host "`nMODES:" -ForegroundColor Yellow
-    Write-Host " 11. AUTO COMPLET (tout faire)"
+    Write-Host "`nGESTION:" -ForegroundColor Yellow
+    Write-Host " 15. Gestion utilisateurs et groupes"
+    Write-Host " 16. Mass Gravel (Activation Windows)"
+    
+    Write-Host "`nMODES:" -ForegroundColor Cyan
+    Write-Host " 17. AUTO COMPLET (tout faire)"
     Write-Host "  0. Quitter"
     Write-Host ""
 }
@@ -269,32 +446,44 @@ while ($continue) {
     switch ($choice) {
         "1" { Clean-TemporaryFiles }
         "2" { Clean-WindowsUpdate }
-        "3" { Clean-RecycleBin }
-        "4" { Clean-DiskCleanup }
-        "5" {
+        "3" { Clean-PrintSpooler }
+        "4" { Clean-RecycleBin }
+        "5" { Clean-DiskCleanup }
+        "6" {
             Clean-TemporaryFiles
             Clean-WindowsUpdate
+            Clean-PrintSpooler
             Clean-RecycleBin
             Clean-DiskCleanup
         }
-        "6" { Repair-SystemFiles }
-        "7" { Repair-WindowsImage }
-        "8" {
+        "7" { Repair-SystemFiles }
+        "8" { Repair-WindowsImage }
+        "9" { Repair-AppxPackages }
+        "10" {
             Repair-SystemFiles
             Repair-WindowsImage
+            Repair-AppxPackages
         }
-        "9" { Defragment-Drive }
-        "10" { Clear-EventLogs }
-        "11" {
-            Write-Host "`nMODE AUTO COMPLET - Toutes les operations" -ForegroundColor Yellow
+        "11" { Defragment-Drive }
+        "12" { Clear-EventLogs }
+        "13" { Fix-ContextMenu }
+        "14" { Export-ApplicationsList }
+        "15" { Show-UserManagementMenu }
+        "16" { Launch-MassGravel }
+        "17" {
+            Write-Host "`nMODE AUTO COMPLET - Toutes les operations" -ForegroundColor Cyan
             Clean-TemporaryFiles
             Clean-WindowsUpdate
+            Clean-PrintSpooler
             Clean-RecycleBin
             Clean-DiskCleanup
             Repair-SystemFiles
             Repair-WindowsImage
+            Repair-AppxPackages
             Defragment-Drive
             Clear-EventLogs
+            Fix-ContextMenu
+            Export-ApplicationsList
         }
         "0" {
             $continue = $false
