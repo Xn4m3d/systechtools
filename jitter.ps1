@@ -1,5 +1,7 @@
-# Script PowerShell - Analyse Jitter via Ping
-# Fonction interactive pour mesurer la latence et l'écart-type (jitter)
+# ============================================================================
+# SCRIPT JITTER - VERSION AMÉLIORÉE AVEC AFFICHAGE PROFESSIONNEL
+# Analyse de latence réseau et écart-type
+# ============================================================================
 
 param(
     [string]$ComputerName = $null,
@@ -12,46 +14,59 @@ $defaultComputer = "8.8.8.8"
 $defaultCount = 100
 $defaultBuffer = 1250
 
-function Show-InteractiveMenu {
-    <#
-    .SYNOPSIS
-    Affiche un menu interactif pour la saisie des paramètres de ping
-    #>
-    
-    Write-Host "`n" -ForegroundColor Cyan
-    Write-Host "╔════════════════════════════════════════╗" -ForegroundColor Cyan
-    Write-Host "║    Analyseur Jitter - Ping Avancé     ║" -ForegroundColor Cyan
-    Write-Host "╚════════════════════════════════════════╝" -ForegroundColor Cyan
+# ============================================================================
+# AFFICHAGE BANNIÈRE
+# ============================================================================
+
+function Show-Banner {
+    Clear-Host
     Write-Host ""
+    Write-Host "╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+    Write-Host "║                                                                ║" -ForegroundColor Cyan
+    Write-Host "║           🌐 ANALYSEUR JITTER - LATENCE RÉSEAU               ║" -ForegroundColor Cyan
+    Write-Host "║                                                                ║" -ForegroundColor Cyan
+    Write-Host "║              Mesure de stabilité de connexion                 ║" -ForegroundColor Cyan
+    Write-Host "║                                                                ║" -ForegroundColor Cyan
+    Write-Host "╚════════════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
+    Write-Host ""
+}
+
+# ============================================================================
+# MENU INTERACTIF
+# ============================================================================
+
+function Show-InteractiveMenu {
+    Write-Host "📝 CONFIGURATION DU TEST" -ForegroundColor Yellow
+    Write-Host "════════════════════════════════════════════════════════════════`n" -ForegroundColor Yellow
     
     # Saisie du nom d'hôte/IP
-    Write-Host "1. Nom d'hôte ou adresse IP à tester" -ForegroundColor Yellow
+    Write-Host "1️⃣  Cible (nom d'hôte ou adresse IP)" -ForegroundColor Cyan
     Write-Host "   Défaut: $defaultComputer" -ForegroundColor Gray
-    $computer = Read-Host "   Entrez la valeur (ou appuyez sur Entrée pour le défaut)"
+    $computer = Read-Host "   → Votre choix"
     if ([string]::IsNullOrWhiteSpace($computer)) {
         $computer = $defaultComputer
     }
     
     # Saisie du nombre de pings
     Write-Host ""
-    Write-Host "2. Nombre de tentatives de ping" -ForegroundColor Yellow
+    Write-Host "2️⃣  Nombre de tentatives de ping" -ForegroundColor Cyan
     Write-Host "   Défaut: $defaultCount" -ForegroundColor Gray
-    $countInput = Read-Host "   Entrez la valeur (ou appuyez sur Entrée pour le défaut)"
+    $countInput = Read-Host "   → Votre choix"
     if ([string]::IsNullOrWhiteSpace($countInput)) {
         $count = $defaultCount
     } else {
-        $count = [int]$countInput
+        try { $count = [int]$countInput } catch { $count = $defaultCount }
     }
     
     # Saisie de la taille du buffer
     Write-Host ""
-    Write-Host "3. Taille du buffer en bytes" -ForegroundColor Yellow
+    Write-Host "3️⃣  Taille du buffer (bytes)" -ForegroundColor Cyan
     Write-Host "   Défaut: $defaultBuffer" -ForegroundColor Gray
-    $bufferInput = Read-Host "   Entrez la valeur (ou appuyez sur Entrée pour le défaut)"
+    $bufferInput = Read-Host "   → Votre choix"
     if ([string]::IsNullOrWhiteSpace($bufferInput)) {
         $buffer = $defaultBuffer
     } else {
-        $buffer = [int]$bufferInput
+        try { $buffer = [int]$bufferInput } catch { $buffer = $defaultBuffer }
     }
     
     return @{
@@ -61,12 +76,11 @@ function Show-InteractiveMenu {
     }
 }
 
+# ============================================================================
+# ANALYSE JITTER
+# ============================================================================
+
 function Invoke-JitterAnalysis {
-    <#
-    .SYNOPSIS
-    Exécute l'analyse de latence et calcule le jitter (écart-type)
-    #>
-    
     param(
         [string]$Computer,
         [int]$Count,
@@ -74,9 +88,16 @@ function Invoke-JitterAnalysis {
     )
     
     Write-Host ""
-    Write-Host "▶ Lancement du test de ping..." -ForegroundColor Cyan
-    Write-Host "  Cible: $Computer | Tentatives: $Count | Buffer: $Buffer bytes" -ForegroundColor Gray
+    Write-Host "╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Magenta
+    Write-Host "║                  EXÉCUTION DU TEST DE PING                     ║" -ForegroundColor Magenta
+    Write-Host "╚════════════════════════════════════════════════════════════════╝`n" -ForegroundColor Magenta
+    
+    Write-Host "Paramètres:" -ForegroundColor Yellow
+    Write-Host "  • Cible: $Computer" -ForegroundColor Gray
+    Write-Host "  • Tentatives: $Count" -ForegroundColor Gray
+    Write-Host "  • Buffer: $Buffer bytes" -ForegroundColor Gray
     Write-Host ""
+    Write-Host "Envoi de pings..." -ForegroundColor Cyan
     
     try {
         # Exécution du ping
@@ -102,49 +123,88 @@ function Invoke-JitterAnalysis {
         $minLatency = ($latencies | Measure-Object -Minimum).Minimum
         $maxLatency = ($latencies | Measure-Object -Maximum).Maximum
         
-        # Calcul de l'écart-type (jitter/std deviation)
+        # Calcul du jitter (écart-type)
         $variance = ($latencies | ForEach-Object { [math]::Pow($_ - $avgLatency, 2) } | Measure-Object -Sum).Sum / $latencies.Count
         $stdDeviation = [math]::Sqrt($variance)
         
         # Affichage des résultats
-        Write-Host "╔════════════════════════════════════════╗" -ForegroundColor Green
-        Write-Host "║          RÉSULTATS DE L'ANALYSE       ║" -ForegroundColor Green
-        Write-Host "╚════════════════════════════════════════╝" -ForegroundColor Green
         Write-Host ""
-        Write-Host "Hôte testé      : $Computer" -ForegroundColor White
-        Write-Host "Pings réussis   : $($latencies.Count)/$Count" -ForegroundColor White
+        Write-Host "╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Green
+        Write-Host "║                     ✓ RÉSULTATS ANALYSE                        ║" -ForegroundColor Green
+        Write-Host "╚════════════════════════════════════════════════════════════════╝`n" -ForegroundColor Green
+        
+        Write-Host "📊 STATISTIQUES" -ForegroundColor Yellow
+        Write-Host "════════════════════════════════════════════════════════════════" -ForegroundColor Yellow
         Write-Host ""
-        Write-Host "Latence moyenne : $([math]::Round($avgLatency, 2)) ms" -ForegroundColor Yellow
-        Write-Host "Latence min     : $minLatency ms" -ForegroundColor Cyan
-        Write-Host "Latence max     : $maxLatency ms" -ForegroundColor Cyan
+        Write-Host "  Hôte testé" -ForegroundColor Cyan -NoNewline
+        Write-Host " . . . . . . . . . . . . $Computer" -ForegroundColor White
+        Write-Host "  Pings réussis" -ForegroundColor Cyan -NoNewline
+        Write-Host " . . . . . . . . . . . $($latencies.Count)/$Count" -ForegroundColor White
+        
         Write-Host ""
-        Write-Host "Jitter (écart-type) : $([math]::Round($stdDeviation, 2)) ms" -ForegroundColor Magenta
+        Write-Host "  Latence moyenne" -ForegroundColor Yellow -NoNewline
+        Write-Host " . . . . . . . . . . $([math]::Round($avgLatency, 2)) ms" -ForegroundColor White
+        Write-Host "  Latence minimale" -ForegroundColor Cyan -NoNewline
+        Write-Host " . . . . . . . . . . $minLatency ms" -ForegroundColor White
+        Write-Host "  Latence maximale" -ForegroundColor Cyan -NoNewline
+        Write-Host " . . . . . . . . . . $maxLatency ms" -ForegroundColor White
+        
+        Write-Host ""
+        Write-Host "  Jitter (écart-type)" -ForegroundColor Magenta -NoNewline
+        Write-Host " . . . . . . . . . $([math]::Round($stdDeviation, 2)) ms" -ForegroundColor White
         Write-Host ""
         
-        # Évaluation de la qualité de la connexion
-        Write-Host "Analyse de qualité :" -ForegroundColor Yellow
+        # Évaluation de la qualité
+        Write-Host "📈 ANALYSE DE QUALITÉ" -ForegroundColor Yellow
+        Write-Host "════════════════════════════════════════════════════════════════" -ForegroundColor Yellow
+        Write-Host ""
+        
         if ($stdDeviation -lt 5) {
-            Write-Host "  ✓ Excellente stabilité de connexion" -ForegroundColor Green
+            Write-Host "  ✓ EXCELLENTE stabilité de connexion" -ForegroundColor Green
+            Write-Host "    Votre connexion est très stable et fiable pour:" -ForegroundColor Green
+            Write-Host "    • Jeux en ligne compétitifs" -ForegroundColor Gray
+            Write-Host "    • Appels vidéo/audio haute qualité" -ForegroundColor Gray
+            Write-Host "    • Transactions financières" -ForegroundColor Gray
         } elseif ($stdDeviation -lt 15) {
-            Write-Host "  ○ Bonne stabilité" -ForegroundColor Cyan
+            Write-Host "  ○ BONNE stabilité" -ForegroundColor Cyan
+            Write-Host "    Votre connexion est adaptée pour:" -ForegroundColor Cyan
+            Write-Host "    • Streaming vidéo HD" -ForegroundColor Gray
+            Write-Host "    • Appels vidéo" -ForegroundColor Gray
+            Write-Host "    • Navigation générale" -ForegroundColor Gray
         } elseif ($stdDeviation -lt 30) {
-            Write-Host "  ⚠ Stabilité moyenne" -ForegroundColor Yellow
+            Write-Host "  ⚠ STABILITÉ MOYENNE" -ForegroundColor Yellow
+            Write-Host "    Vous pourriez expérimenter:" -ForegroundColor Yellow
+            Write-Host "    • Lag occasionnel en jeux" -ForegroundColor Gray
+            Write-Host "    • Décalages dans appels vidéo" -ForegroundColor Gray
+            Write-Host "    • Buffering en streaming" -ForegroundColor Gray
         } else {
-            Write-Host "  ✗ Instabilité élevée détectée" -ForegroundColor Red
+            Write-Host "  ✗ INSTABILITÉ ÉLEVÉE DÉTECTÉE" -ForegroundColor Red
+            Write-Host "    Problèmes attendus:" -ForegroundColor Red
+            Write-Host "    • Déconnexions fréquentes" -ForegroundColor Gray
+            Write-Host "    • Lag important en jeux" -ForegroundColor Gray
+            Write-Host "    • Problèmes d'appels vidéo" -ForegroundColor Gray
         }
         
         Write-Host ""
-        Write-Host "╚════════════════════════════════════════╝" -ForegroundColor Green
-        Write-Host ""
+        Write-Host "╚════════════════════════════════════════════════════════════════╝`n" -ForegroundColor Green
         
     } catch {
-        Write-Host "✗ Erreur lors du ping: $_" -ForegroundColor Red
+        Write-Host ""
+        Write-Host "╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Red
+        Write-Host "║  ✗ ERREUR LORS DU TEST" -ForegroundColor Red
+        Write-Host "╚════════════════════════════════════════════════════════════════╝`n" -ForegroundColor Red
+        Write-Host "  Message: $_" -ForegroundColor Red
     }
 }
 
-# Point d'entrée principal
+# ============================================================================
+# PROGRAMME PRINCIPAL
+# ============================================================================
+
 function Main {
-    # Si les paramètres sont fournis en ligne de commande, les utiliser
+    Show-Banner
+    
+    # Configuration
     if ($PSBoundParameters.Count -gt 0 -and -not [string]::IsNullOrWhiteSpace($ComputerName)) {
         $config = @{
             Computer = $ComputerName
@@ -152,13 +212,11 @@ function Main {
             Buffer = if ($BufferSize -gt 0) { $BufferSize } else { $defaultBuffer }
         }
     } else {
-        # Sinon, afficher le menu interactif
         $config = Show-InteractiveMenu
     }
     
-    # Lancer l'analyse
+    # Analyse
     Invoke-JitterAnalysis -Computer $config.Computer -Count $config.Count -Buffer $config.Buffer
 }
 
-# Exécution du script
 Main
