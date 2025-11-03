@@ -1,422 +1,244 @@
-# 🛠️ systechtools
+# SYSTECHTOOLS - Suite de Maintenance Système
 
-> **Collection de scripts PowerShell pour la maintenance et le diagnostic système** | Hébergé sur GitHub RAW avec exécution distante
+Suite de scripts PowerShell pour la maintenance, le diagnostic et l'optimisation de systèmes Windows.
 
----
+## Contenu
 
-## 📋 Table des matières
+### Scripts Principaux
 
-- [🚀 Démarrage rapide](#-démarrage-rapide)
-- [📦 Scripts disponibles](#-scripts-disponibles)
-- [🎯 Fonctionnalités](#-fonctionnalités)
-- [💾 Installation](#-installation)
-- [🔧 Utilisation](#-utilisation)
-- [📊 Exemples](#-exemples)
-- [⚙️ Configuration](#-configuration)
-- [📝 Licence](#-licence)
+#### `menu-selector.ps1`
+Menu centralisé pour exécuter les scripts disponibles sur le dépôt.
+- Lance les autres scripts via GitHub RAW URLs
+- Interface interactive avec numérotation
+- Supporte l'exécution à distance
 
----
-
-## 🚀 Démarrage rapide
-
-### Une seule commande pour tout lancer :
-
+**Utilisation :**
 ```powershell
-iwr 'https://raw.githubusercontent.com/Xn4m3d/systechtools/refs/heads/main/menu-selector.ps1' -UseBasicParsing | iex
-```
-
-**⚠️ Exécutez PowerShell en tant qu'administrateur**
-
----
-
-## 📦 Scripts disponibles
-
-### 1️⃣ **menu-selector.ps1** 🎯 Le Hub Central
-
-| Aspect | Détails |
-|--------|---------|
-| **Fonction** | Gestionnaire de scripts avec interface interactive |
-| **Utilité** | Point d'entrée unique pour tous les outils |
-| **Privilèges** | Admin recommandé |
-| **Taille** | ~3.5 KB |
-| **Temps exec** | < 1 sec |
-
-**Caractéristiques :**
-- ✅ Interface élégante avec bannière
-- ✅ Menu interactif intuitif
-- ✅ Descriptions détaillées des scripts
-- ✅ Gestion des erreurs robuste
-- ✅ Exécution sécurisée en local
-
----
-
-### 2️⃣ **maintenance-system.ps1** 🔧 Diagnostic & Réparation
-
-| Aspect | Détails |
-|--------|---------|
-| **Fonction** | Maintenance système complète |
-| **Utilité** | Diagnostics, réparations, nettoyage |
-| **Privilèges** | **Admin obligatoire** |
-| **Taille** | ~20 KB |
-| **Temps exec** | 5-60 min (selon options) |
-
-**3 Sections principales :**
-
-**Diagnostics 📊**
-- Santé disque dur (SMART)
-- Espace disque disponible
-- Services critiques Windows
-- Utilisation mémoire RAM
-
-**Réparations 🔨**
-- DISM Image Health Restore
-- SFC (System File Check)
-- Vérification intégrité fichiers système
-
-**Nettoyage 🧹**
-- Vidage fichiers temporaires
-- Cache Windows Update
-- Espace disque libéré
-
----
-
-### 3️⃣ **jitter.ps1** 🌐 Analyseur Réseau
-
-| Aspect | Détails |
-|--------|---------|
-| **Fonction** | Mesure de latence et stabilité réseau |
-| **Utilité** | Diagnostic connexion internet |
-| **Privilèges** | Utilisateur standard |
-| **Taille** | ~6.5 KB |
-| **Temps exec** | 2-5 min |
-
-**Mesures effectuées :**
-- 🎯 Latence moyenne (ping)
-- 📊 Jitter (écart-type)
-- 📈 Min/Max latence
-- 🎮 Évaluation qualité (gaming, vidéo, etc)
-
----
-
-## 🎯 Fonctionnalités
-
-### ✨ Avantages principaux
-
-```
-┌─────────────────────────────────────────┐
-│  🌍 Accès distant        │  GitHub RAW  │
-│  🔒 Sécurisé             │  HTTPS       │
-│  ⚡ Rapide               │  < 1 sec     │
-│  🎨 Interface moderne    │  Bannières   │
-│  👤 Multi-utilisateur    │  Interactif  │
-│  📱 Responsive           │  Tous OS     │
-└─────────────────────────────────────────┘
-```
-
-### 🔐 Sécurité
-
-- ✅ Pas de données sensibles
-- ✅ Pas de chemins hardcodés
-- ✅ Vérification admin automatique
-- ✅ Téléchargement sécurisé HTTPS
-- ✅ Exécution temporaire (fichiers supprimés)
-
----
-
-## 💾 Installation
-
-### Option 1 : Exécution Directe (Recommandée)
-
-**Aucune installation requise !** Copie/colle simplement :
-
-```powershell
-# Ouvrir PowerShell en tant qu'Admin
-iwr 'https://raw.githubusercontent.com/Xn4m3d/systechtools/refs/heads/main/menu-selector.ps1' -UseBasicParsing | iex
-```
-
-### Option 2 : Cloner le Repo
-
-```powershell
-# Si vous voulez tous les fichiers localement
-git clone https://github.com/Xn4m3d/systechtools.git
-cd systechtools
-
-# Puis exécuter
 .\menu-selector.ps1
 ```
 
-### Option 3 : Téléchargement Manuel
-
-1. Aller sur [GitHub Releases](https://github.com/Xn4m3d/systechtools/releases)
-2. Télécharger les scripts
-3. Exécuter `menu-selector.ps1`
-
----
-
-## 🔧 Utilisation
-
-### Workflow Principal
-
-```
-┌──────────────────────────────────────┐
-│  Exécuter menu-selector.ps1          │
-└──────────────────┬───────────────────┘
-                   │
-        ┌──────────┼──────────┐
-        │          │          │
-        ▼          ▼          ▼
-   [1] jitter  [2] maint.  [0] Quitter
-   [2] maint.  [3] répar.
-   [3] autre   [4] nettoyer
-```
-
-### Exemples de Commande
-
-#### 🌐 Tester la latence (défaut)
-
+Ou en ligne de commande (téléchargement + exécution) :
 ```powershell
-.\jitter.ps1
-# Lance le menu interactif
+Invoke-Expression ((New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/Xn4m3d/systechtools/refs/heads/main/menu-selector.ps1'))
 ```
 
-#### 🌐 Tester une adresse spécifique
+#### `maintenance-system.ps1`
+Script complet de maintenance système avec diagnostics et réparations.
 
-```powershell
-.\jitter.ps1 -ComputerName "8.8.8.8" -Count 50 -BufferSize 1250
-```
+**Fonctionnalités :**
 
-#### 🔧 Lancer la maintenance
+**NETTOYAGE (5 options) :**
+- Suppression fichiers temporaires (Temp, AppData, $env:TEMP)
+- Vidage cache Windows Update
+- Vidage corbeille
+- Disk Cleanup (nettoyage approfondi)
+- **AUTO NETTOYAGE** : Exécute tous les nettoyages
 
+**REPARATION (3 options) :**
+- SFC /scannow : Réparation fichiers système
+- DISM RestoreHealth : Réparation image Windows
+- **AUTO REPARATION** : Exécute toutes les réparations
+
+**OPTIMISATION (2 options) :**
+- Défragmentation/optimisation disque
+- Vidage journaux d'événements (System, Application, Security)
+
+**MODE AUTO COMPLET :**
+- Exécute toutes les opérations en une seule commande
+- Idéal pour diagnostiquer et réparer les PC problématiques
+
+**Utilisation :**
 ```powershell
 .\maintenance-system.ps1
-# Menu interactif avec 8 options
 ```
 
-#### 🚀 Tout depuis le menu central
+Options du menu :
+```
+1 - Fichiers temporaires
+2 - Cache Windows Update  
+3 - Corbeille
+4 - Disk Cleanup
+5 - AUTO : Tous les nettoyages
+6 - SFC (fichiers système)
+7 - DISM (image Windows)
+8 - AUTO : Toutes les réparations
+9 - Défragmentation
+10 - Journaux d'événements
+11 - AUTO COMPLET (tout faire)
+0 - Quitter
+```
 
+#### `jitter.ps1`
+Script d'ajout de délai aléatoire avec gestion de la durée.
+
+**Utilisation :**
 ```powershell
-.\menu-selector.ps1
-# Interface unifiée
+.\jitter.ps1
 ```
 
----
+### Script de Configuration
 
-## 📊 Exemples
+#### `setup.ps1`
+Générateur automatique du menu-selector.ps1.
+- Scanne le dépôt pour les scripts disponibles
+- Génère automatiquement les URLs GitHub RAW
+- Crée un menu interactif fonctionnel
 
-### Exemple 1 : Diagnostic Complet
-
+**Utilisation :**
 ```powershell
-# Commande
-iwr 'https://..../menu-selector.ps1' -UseBasicParsing | iex
-
-# Résultat
-╔════════════════════════════════════════════════════════════════╗
-║             🛠️  GESTIONNAIRE DE SCRIPTS SYSTÈME               ║
-╚════════════════════════════════════════════════════════════════╝
-
-📋 SCRIPTS DISPONIBLES
-═══════════════════════════════════════════════════════════════
-
-  1. jitter                    (6.5 KB)
-     └─ Analyseur de latence réseau et jitter
-
-  2. maintenance-system        (20 KB)
-     └─ Diagnostic et maintenance système complète
-
-  0. QUITTER
-
-═══════════════════════════════════════════════════════════════
-Sélectionnez un script (0-2): 2
+Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope CurrentUser
+.\setup.ps1
 ```
 
-### Exemple 2 : Résultat Jitter
+## Installation
 
-```
-╔════════════════════════════════════════════════════════════════╗
-║                     ✓ RÉSULTATS ANALYSE                        ║
-╚════════════════════════════════════════════════════════════════╝
-
-📊 STATISTIQUES
-════════════════════════════════════════════════════════════════
-
-  Hôte testé . . . . . . . . . . . . 8.8.8.8
-  Pings réussis . . . . . . . . . . 100/100
-
-  Latence moyenne . . . . . . . . . 25.45 ms
-  Latence minimale . . . . . . . . . 24 ms
-  Latence maximale . . . . . . . . . 28 ms
-
-  Jitter (écart-type) . . . . . . . . 1.23 ms
-
-📈 ANALYSE DE QUALITÉ
-════════════════════════════════════════════════════════════════
-
-  ✓ EXCELLENTE stabilité de connexion
-    Votre connexion est très stable et fiable pour:
-    • Jeux en ligne compétitifs
-    • Appels vidéo/audio haute qualité
-    • Transactions financières
-```
-
----
-
-## ⚙️ Configuration
-
-### Variables d'environnement
-
-```powershell
-# Mode verbose (voir tous les détails)
-$VerbosePreference = 'Continue'
-
-# Exécution script
-.\script.ps1 -ComputerName "google.com" -Count 100
-```
-
-### Paramètres personnalisés
-
-#### jitter.ps1
-- `-ComputerName` : Adresse IP ou nom d'hôte (défaut: 8.8.8.8)
-- `-Count` : Nombre de pings (défaut: 100)
-- `-BufferSize` : Taille données (défaut: 1250)
-
-#### maintenance-system.ps1
-- Menu interactif : Sélectionnez les options manuellement
-- Support complet DISM et SFC
-
----
-
-## 📋 Prérequis
-
-| Élément | Exigence |
-|---------|----------|
-| **OS** | Windows 7+ (Win 10/11 recommandé) |
-| **PowerShell** | v3.0+ |
-| **Internet** | Connexion pour téléchargement RAW |
-| **Privilèges** | Admin pour maintenance-system.ps1 |
-| **Antivirus** | Aucun bloquage PowerShell |
-
----
-
-## 🆘 Dépannage
-
-### ❌ Erreur : "Accès refusé"
-
-```powershell
-# Solution : Ouvrir PowerShell en Admin
-# Windows 10/11 : Win+X → Windows PowerShell (Admin)
-# Windows 7 : Clic droit → Exécuter en tant qu'administrateur
-```
-
-### ❌ Erreur : "Impossible de télécharger"
-
-```powershell
-# Vérifier connexion internet
-Test-NetConnection -ComputerName github.com -Port 443
-
-# Vérifier proxy
-[System.Net.ServicePointManager]::DefaultProxy
-```
-
-### ❌ Erreur : "Execution policy"
-
-```powershell
-# Solution temporaire
-Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
-
-# Ou utiliser iex directement (déjà inclus)
-```
-
----
-
-## 📞 Support & Contribution
-
-### Signaler un Bug
-
-1. Ouvrir [GitHub Issues](https://github.com/Xn4m3d/systechtools/issues)
-2. Décrire le problème
-3. Joindre les logs/erreurs
-
-### Contribuer
-
+### Option 1 : Clonage Git
 ```bash
 git clone https://github.com/Xn4m3d/systechtools.git
-git checkout -b feature/mon-feature
-git commit -am "Ajout: ma nouvelle fonctionnalité"
-git push origin feature/mon-feature
+cd systechtools
 ```
 
----
+### Option 2 : Téléchargement direct
+Téléchargez les fichiers `.ps1` depuis le dépôt.
 
-## 📊 Statistiques
+## Configuration requise
 
-| Métrique | Valeur |
-|----------|--------|
-| Scripts | 3 |
-| Taille totale | ~30 KB |
-| Lignes de code | ~800 |
-| Temps de réponse | < 1s |
-| Support Windows | 7, 8, 10, 11 |
-| Status | ✅ Production |
+- **Windows 7/10/11 ou Server 2012+**
+- **PowerShell 3.0+**
+- **Privilèges administrateur** (pour la plupart des opérations)
 
----
+## Exécution
 
-## 📝 Licence
+### Mode Local
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
+.\menu-selector.ps1
+```
 
-MIT License - Libre d'utilisation
+### Mode Distant (GitHub)
+```powershell
+Invoke-Expression ((New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/Xn4m3d/systechtools/refs/heads/main/menu-selector.ps1'))
+```
 
----
+## Nouveautés - Version Actuelle
 
-## 🎯 Feuille de route
+### Ajouts Récents
+- ✅ Menu centralisé (menu-selector.ps1)
+- ✅ Modes AUTO par catégorie
+- ✅ Mode AUTO COMPLET pour diagnostics rapides
+- ✅ Défragmentation disque intégrée
+- ✅ Vidage journaux d'événements
+- ✅ Rapport de synthèse avec durée
+- ✅ Meilleure gestion des erreurs
 
-- ✅ Menu central
-- ✅ Diagnostic système
-- ✅ Analyseur jitter
-- 🔄 Monitoring temps réel
-- 🔄 Interface web (beta)
-- 🔄 Rapports PDF
+### Fonctionnalités Conservées
+- ✅ Nettoyage fichiers temporaires
+- ✅ Vidage cache Windows Update
+- ✅ SFC et DISM
+- ✅ Vérification privilèges administrateur
+- ✅ Logs détaillés
 
----
+## Amélioration de la Politique d'Exécution
 
-## 💡 Conseils d'Utilisation
+### Résoudre "Cannot be loaded. The file is not digitally signed"
 
-### Pour IT/Techniciens
+**Solution 1 (Temporaire - Recommandée) :**
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
+.\maintenance-system.ps1
+```
 
-1. **Avant intervention** : Lancer diagnostic complet
-2. **Pendant maintenance** : Utiliser réparations ciblées
-3. **Après nettoyage** : Relancer diagnostics pour vérifier
+**Solution 2 (Permanente - Utilisateur) :**
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope CurrentUser
+.\maintenance-system.ps1
+```
 
-### Pour Utilisateurs
+**Solution 3 (Ligne de commande) :**
+```powershell
+powershell -ExecutionPolicy Bypass -File ".\maintenance-system.ps1"
+```
 
-1. **Hebdomadaire** : Nettoyage fichiers temp
-2. **Mensuel** : Diagnostic complet
-3. **Au besoin** : Test latence réseau
+## Utilisation pour PC Problématiques
 
----
-
-## 🔗 Liens Utiles
-
-- 🌐 [GitHub Repository](https://github.com/Xn4m3d/systechtools)
-- 📚 [Documentation PowerShell](https://docs.microsoft.com/powershell/)
-- 🐛 [Signaler un bug](https://github.com/Xn4m3d/systechtools/issues)
-- ⭐ [Laisser une étoile](https://github.com/Xn4m3d/systechtools)
-
----
-
-<div align="center">
-
-### 🚀 Prêt à l'emploi !
-
-Copie/colle la commande ci-dessous dans PowerShell (Admin)
+Exemple : PC avec beaucoup d'espace disque utilisé et problèmes système
 
 ```powershell
-iwr 'https://raw.githubusercontent.com/Xn4m3d/systechtools/refs/heads/main/menu-selector.ps1' -UseBasicParsing | iex
+# 1. Charger le script
+.\maintenance-system.ps1
+
+# 2. Sélectionner option 11 pour AUTO COMPLET
+# Cela va :
+# - Nettoyer les fichiers temporaires
+# - Vider le cache Windows Update
+# - Vider la corbeille
+# - Disk Cleanup
+# - Réparation SFC
+# - Réparation DISM
+# - Défragmentation
+# - Vidage des journaux
+
+# 3. Attendre la fin (rapport affichera ce qui a été fait)
 ```
 
-**⭐ N'oublie pas de laisser une étoile sur GitHub !**
+**Résultats attendus :**
+- 5-50 GB libérés selon l'état du système
+- Fichiers système réparés
+- Disque optimisé
+- Journal récapitulatif avec durée
 
----
+## Développement
 
-*Dernière mise à jour: 2025-11-03*  
-*Version: 1.0 - Production Ready* ✅
+### Structure des Scripts
+- Vérification privilèges admin au démarrage
+- Fonctions utilitaires réutilisables
+- Logging complèt pour diagnostics
+- Gestion d'erreurs robuste
 
-</div>
+### Améliorations Futures
+- Sauvegarde des rapports en fichier
+- Export des logs en CSV
+- Scheduling automatique
+- Statistiques d'économies disque
+
+## Support et Contribution
+
+Pour signaler des bugs ou proposer des améliorations :
+1. Créez une issue sur GitHub
+2. Testez les scripts en environnement contrôlé
+3. Proposez des pull requests
+
+## Licence
+
+Libre d'utilisation pour usage personnel et professionnel.
+
+## Auteur
+
+**Xn4m3d**  
+GitHub: https://github.com/Xn4m3d/systechtools
+
+## Notes de Sécurité
+
+⚠️ **Important :**
+- Ces scripts modifient le système - testez d'abord sur une machine de test
+- Les modes AUTO exécutent des opérations substantielles sans confirmation
+- Sauvegardez les données critiques avant utilisation
+- Utilisez toujours depuis une console PowerShell en administrateur
+- Les scripts téléchargés depuis GitHub sont d'abord examinés avant exécution
+
+## Changelog
+
+### v2.0 (Actuelle)
+- Ajout menu-selector centralisé
+- Modes AUTO pour nettoyage et réparation
+- Mode AUTO COMPLET
+- Défragmentation intégrée
+- Vidage journaux d'événements
+- Meilleure interface utilisateur
+- Rapport de synthèse
+
+### v1.0
+- Scripts de base
+- SFC et DISM
+- Nettoyage fichiers temporaires
+- Windows Update cleanup
