@@ -22,6 +22,8 @@ $global:reportLog = @()
 $global:errorsFound = @()
 $global:actionsPerformed = @()
 $global:startTime = Get-Date
+$global:selectedActions = @()
+$global:userChoices = @{}
 
 function Write-LogEntry {
     param([string]$Message, [ValidateSet("INFO", "SUCCESS", "WARNING", "ERROR", "ACTION")][string]$Type = "INFO")
@@ -308,74 +310,153 @@ function Export-ApplicationsList {
     }
 }
 
-function Show-UserManagementMenu {
-    Write-Host "`n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Yellow
-    Write-Host "GESTION UTILISATEURS ET GROUPES" -ForegroundColor Yellow
-    Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" -ForegroundColor Yellow
-    
-    Write-Host "1. Ajouter utilisateur local"
-    Write-Host "2. Supprimer utilisateur local"
-    Write-Host "3. Activer administrateur"
-    Write-Host "4. Desactiver utilisateur"
-    Write-Host "5. Changer mot de passe utilisateur"
-    Write-Host "6. Voir utilisateurs connectes"
-    Write-Host "0. Retour"
-    Write-Host ""
-    
-    $choice = Read-Host "Choisissez une option"
-    
-    switch ($choice) {
-        "1" {
-            $username = Read-Host "Nom utilisateur"
-            $password = Read-Host "Mot de passe" -AsSecureString
-            Write-LogEntry "Creation utilisateur $username..." "ACTION"
-            net user $username $password /add 2>&1 | Out-Null
-            Write-LogEntry "Utilisateur $username cre" "SUCCESS"
-        }
-        "2" {
-            $username = Read-Host "Nom utilisateur a supprimer"
-            Write-LogEntry "Suppression utilisateur $username..." "ACTION"
-            net user $username /delete 2>&1 | Out-Null
-            Write-LogEntry "Utilisateur $username supprim" "SUCCESS"
-        }
-        "3" {
-            $username = Read-Host "Nom utilisateur"
-            Write-LogEntry "Ajout groupe Administrateurs..." "ACTION"
-            net localgroup Administrateurs $username /add 2>&1 | Out-Null
-            Write-LogEntry "Utilisateur $username admin" "SUCCESS"
-        }
-        "4" {
-            $username = Read-Host "Nom utilisateur"
-            Write-LogEntry "Desactivation utilisateur..." "ACTION"
-            net user $username /active:no 2>&1 | Out-Null
-            Write-LogEntry "Utilisateur $username dsactiv" "SUCCESS"
-        }
-        "5" {
-            $username = Read-Host "Nom utilisateur"
-            $newpass = Read-Host "Nouveau mot de passe" -AsSecureString
-            Write-LogEntry "Changement mot de passe $username..." "ACTION"
-            net user $username $newpass 2>&1 | Out-Null
-            Write-LogEntry "Mot de passe chang" "SUCCESS"
-        }
-        "6" {
-            Write-LogEntry "Utilisateurs connectes:" "INFO"
-            query user
-        }
-        "0" { return }
-    }
-}
-
-function Launch-MassGravel {
+function Launch-MassGraveActivation {
     Write-Host "`n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Red
-    Write-Host "LANCEMENT MASS GRAVEL (ACTIVATION WINDOWS)" -ForegroundColor Red
+    Write-Host "LANCEMENT MASS GRAVE ACTIVATION" -ForegroundColor Red
     Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" -ForegroundColor Red
     
-    $confirm = Read-Host "Vous etes sur? (O/N)"
-    if ($confirm -eq "O" -or $confirm -eq "o") {
-        Write-LogEntry "Lancement Mass Gravel..." "ACTION"
-        Start-Process powershell.exe -ArgumentList "irm https://get.activated.win | iex" -Verb RunAs
-        Write-LogEntry "Mass Gravel lanc dans une nouvelle fentre" "SUCCESS"
-        $global:actionsPerformed += "Mass Gravel Launched"
+    Write-LogEntry "Lancement MASS GRAVE ACTIVATION..." "ACTION"
+    Start-Process powershell.exe -ArgumentList "irm https://get.activated.win | iex" -Verb RunAs
+    Write-LogEntry "MASS GRAVE ACTIVATION lancee dans une nouvelle fenetre" "SUCCESS"
+    $global:actionsPerformed += "MASS GRAVE ACTIVATION Launched"
+}
+
+function Launch-WinUtil {
+    Write-Host "`n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" -ForegroundColor Magenta
+    Write-Host "LANCEMENT WINUTIL" -ForegroundColor Magenta
+    Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" -ForegroundColor Magenta
+    
+    Write-LogEntry "Lancement WinUtil..." "ACTION"
+    Start-Process powershell.exe -ArgumentList "irm https://christitus.com/win | iex" -Verb RunAs
+    Write-LogEntry "WinUtil lancee dans une nouvelle fenetre" "SUCCESS"
+    $global:actionsPerformed += "WinUtil Launched"
+}
+
+function Show-ActionSelectionMenu {
+    Write-Host "`n╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+    Write-Host "║              CONFIGURATION MODE AUTO PERSONNALISE              ║" -ForegroundColor Cyan
+    Write-Host "╚════════════════════════════════════════════════════════════════╝`n" -ForegroundColor Cyan
+    
+    Write-Host "Selectionnez les actions a executer (entrez les numeros separes par des virgules)" -ForegroundColor Yellow
+    Write-Host "Exemple: 1,2,5,7,11 pour lancer les actions 1, 2, 5, 7 et 11`n" -ForegroundColor Yellow
+    
+    Write-Host "NETTOYAGE:" -ForegroundColor Green
+    Write-Host "  1. Fichiers temporaires"
+    Write-Host "  2. Cache Windows Update"
+    Write-Host "  3. Spool Imprimante"
+    Write-Host "  4. Corbeille"
+    Write-Host "  5. Disk Cleanup"
+    
+    Write-Host "`nREPARATION:" -ForegroundColor Magenta
+    Write-Host "  6. SFC (Reparation fichiers) - Duree: 15-30 min"
+    Write-Host "  7. DISM (Reparation image + Component)"
+    Write-Host "  8. Packages AppX"
+    
+    Write-Host "`nOPTIMISATION:" -ForegroundColor Blue
+    Write-Host "  9. Defragmentation (HDD) ou TRIM (SSD)"
+    Write-Host " 10. Journaux d'evenements"
+    Write-Host " 11. Menu contextuel"
+    Write-Host " 12. Export liste applications"
+    
+    Write-Host "`nOUTILS EXTERNES:" -ForegroundColor Red
+    Write-Host " 13. MASS GRAVE ACTIVATION"
+    Write-Host " 14. WinUtil"
+    Write-Host ""
+    Write-Host "Tapez 'quit' pour annuler`n" -ForegroundColor Yellow
+    
+    $input = Read-Host "Vos choix"
+    
+    if ($input -eq "quit" -or $input -eq "") {
+        return $false
+    }
+    
+    $choices = $input -split "," | ForEach-Object { $_.Trim() }
+    $global:selectedActions = $choices
+    
+    return $true
+}
+
+function Get-UserPreConfigurations {
+    Write-Host "`n╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+    Write-Host "║          PRE-CONFIGURATION DES ACTIONS INTERACTIVES           ║" -ForegroundColor Cyan
+    Write-Host "╚════════════════════════════════════════════════════════════════╝`n" -ForegroundColor Cyan
+    
+    if ($global:selectedActions -contains "6") {
+        Write-Host "`n[ACTION 6 - SFC]" -ForegroundColor Magenta
+        Write-Host "La reparation des fichiers systeme peut prendre 15-30 minutes."
+        Write-Host "Confirmez-vous? (O/N)" -ForegroundColor Yellow
+        $confirm = Read-Host ""
+        $global:userChoices["SFC"] = ($confirm -eq "O" -or $confirm -eq "o")
+    }
+    
+    if ($global:selectedActions -contains "13") {
+        Write-Host "`n[ACTION 13 - MASS GRAVE ACTIVATION]" -ForegroundColor Red
+        Write-Host "Cet outil lancera une fenetre externe pour l'activation Windows."
+        Write-Host "Confirmez-vous? (O/N)" -ForegroundColor Yellow
+        $confirm = Read-Host ""
+        $global:userChoices["MassGrave"] = ($confirm -eq "O" -or $confirm -eq "o")
+    }
+    
+    if ($global:selectedActions -contains "14") {
+        Write-Host "`n[ACTION 14 - WINUTIL]" -ForegroundColor Magenta
+        Write-Host "Cet outil lancera une interface graphique pour l'optimisation Windows."
+        Write-Host "Confirmez-vous? (O/N)" -ForegroundColor Yellow
+        $confirm = Read-Host ""
+        $global:userChoices["WinUtil"] = ($confirm -eq "O" -or $confirm -eq "o")
+    }
+    
+    Write-Host "`n" -ForegroundColor Cyan
+    Write-Host "╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+    Write-Host "║              CONFIGURATION COMPLETE - PRET A DEMARRER         ║" -ForegroundColor Cyan
+    Write-Host "╚════════════════════════════════════════════════════════════════╝`n" -ForegroundColor Cyan
+    
+    Write-Host "Appuyez sur Entree pour demarrer le mode auto configure..." -ForegroundColor Green
+    Read-Host ""
+}
+
+function Execute-CustomAutoMode {
+    Write-Host "`n╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
+    Write-Host "║                    MODE AUTO PERSONNALISE EN COURS            ║" -ForegroundColor Cyan
+    Write-Host "╚════════════════════════════════════════════════════════════════╝`n" -ForegroundColor Cyan
+    
+    foreach ($action in $global:selectedActions) {
+        switch ($action) {
+            "1" { Clean-TemporaryFiles }
+            "2" { Clean-WindowsUpdate }
+            "3" { Clean-PrintSpooler }
+            "4" { Clean-RecycleBin }
+            "5" { Clean-DiskCleanup }
+            "6" {
+                if ($global:userChoices["SFC"]) {
+                    Repair-SystemFiles
+                } else {
+                    Write-LogEntry "SFC skipped par l'utilisateur" "WARNING"
+                }
+            }
+            "7" { Repair-WindowsImage }
+            "8" { Repair-AppxPackages }
+            "9" { Defragment-Drive }
+            "10" { Clear-EventLogs }
+            "11" { Fix-ContextMenu }
+            "12" { Export-ApplicationsList }
+            "13" {
+                if ($global:userChoices["MassGrave"]) {
+                    Launch-MassGraveActivation
+                } else {
+                    Write-LogEntry "MASS GRAVE ACTIVATION skipped par l'utilisateur" "WARNING"
+                }
+            }
+            "14" {
+                if ($global:userChoices["WinUtil"]) {
+                    Launch-WinUtil
+                } else {
+                    Write-LogEntry "WinUtil skipped par l'utilisateur" "WARNING"
+                }
+            }
+            default {
+                Write-LogEntry "Action inconnue: $action" "WARNING"
+            }
+        }
     }
 }
 
@@ -399,13 +480,13 @@ function Generate-Report {
         }
     }
     
-    Write-Host "`nDure: $($duration.Minutes) min $($duration.Seconds) sec" -ForegroundColor Yellow
+    Write-Host "`nDuree: $($duration.Minutes) min $($duration.Seconds) sec" -ForegroundColor Yellow
     Write-Host ""
 }
 
 function Show-Menu {
     Write-Host "`n╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-    Write-Host "║                  MAINTENANCE SYSTEME v2.1                      ║" -ForegroundColor Cyan
+    Write-Host "║                  MAINTENANCE SYSTEME v2.1+                      ║" -ForegroundColor Cyan
     Write-Host "╚════════════════════════════════════════════════════════════════╝`n" -ForegroundColor Cyan
     
     Write-Host "NETTOYAGE:" -ForegroundColor Green
@@ -428,12 +509,12 @@ function Show-Menu {
     Write-Host " 13. Menu contextuel"
     Write-Host " 14. Export liste applications"
     
-    Write-Host "`nGESTION:" -ForegroundColor Yellow
-    Write-Host " 15. Gestion utilisateurs et groupes"
-    Write-Host " 16. Mass Gravel (Activation Windows)"
+    Write-Host "`nOUTILS EXTERNES:" -ForegroundColor Red
+    Write-Host " 15. MASS GRAVE ACTIVATION (Activation Windows)"
+    Write-Host " 16. WinUtil (Suite d'optimisation complete)"
     
     Write-Host "`nMODES:" -ForegroundColor Cyan
-    Write-Host " 17. AUTO COMPLET (tout faire)"
+    Write-Host " 17. AUTO PERSONNALISE - Selectionnez vos actions"
     Write-Host "  0. Quitter"
     Write-Host ""
 }
@@ -468,22 +549,13 @@ while ($continue) {
         "12" { Clear-EventLogs }
         "13" { Fix-ContextMenu }
         "14" { Export-ApplicationsList }
-        "15" { Show-UserManagementMenu }
-        "16" { Launch-MassGravel }
+        "15" { Launch-MassGraveActivation }
+        "16" { Launch-WinUtil }
         "17" {
-            Write-Host "`nMODE AUTO COMPLET - Toutes les operations" -ForegroundColor Cyan
-            Clean-TemporaryFiles
-            Clean-WindowsUpdate
-            Clean-PrintSpooler
-            Clean-RecycleBin
-            Clean-DiskCleanup
-            Repair-SystemFiles
-            Repair-WindowsImage
-            Repair-AppxPackages
-            Defragment-Drive
-            Clear-EventLogs
-            Fix-ContextMenu
-            Export-ApplicationsList
+            if (Show-ActionSelectionMenu) {
+                Get-UserPreConfigurations
+                Execute-CustomAutoMode
+            }
         }
         "0" {
             $continue = $false
