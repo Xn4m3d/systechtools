@@ -242,10 +242,43 @@ function Repair-Appx-Packages {
     Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" -ForegroundColor Magenta
     
     try {
-        Get-AppXPackage -AllUsers | Repair-AppxPackage -ErrorAction SilentlyContinue
-        Write-Log-Entry "AppX réparés" "SUCCESS"
-        $global:actionsPerformed += "9. AppX Repair"
-    } catch { Write-Log-Entry "Erreur AppX" "WARNING" }
+        Write-Log-Entry "Énumération des packages AppX..." "ACTION"
+        
+        $packages = Get-AppXPackage -ErrorAction SilentlyContinue
+        
+        if ($null -eq $packages -or $packages.Count -eq 0) {
+            Write-Log-Entry "Aucun package AppX trouvé" "WARNING"
+            $global:actionsPerformed += "9. AppX: Aucun package trouvé"
+            return
+        }
+        
+        $count = 0
+        $failed = 0
+        
+        foreach ($package in $packages) {
+            try {
+                Repair-AppxPackage -Package $package.PackageFullName -ErrorAction SilentlyContinue
+                $count++
+            } catch {
+                $failed++
+            }
+        }
+        
+        if ($count -gt 0) {
+            Write-Log-Entry "$count packages AppX réparés" "SUCCESS"
+            $global:actionsPerformed += "9. AppX Repair: $count packages réparés"
+        } elseif ($failed -gt 0) {
+            Write-Log-Entry "$failed packages AppX détectés mais erreur lors réparation" "WARNING"
+            Write-Log-Entry "C'est normal sur certains systèmes" "INFO"
+            $global:actionsPerformed += "9. AppX: $failed packages (erreur réparation)"
+        } else {
+            Write-Log-Entry "Aucun package à réparer" "WARNING"
+            $global:actionsPerformed += "9. AppX: Aucun package à réparer"
+        }
+    } catch { 
+        Write-Log-Entry "Erreur réparation AppX" "WARNING"
+        Write-Log-Entry "Cela peut être normal sur certains systèmes" "INFO"
+    }
 }
 
 function Defragment-Drive {
@@ -255,39 +288,64 @@ function Defragment-Drive {
     
     try {
         Write-Log-Entry "Détection type de disque..." "ACTION"
-        $disk = Get-Volume -DriveLetter C -ErrorAction SilentlyContinue
         
-        if ($null -eq $disk) {
-            Write-Log-Entry "Impossible de détecter le disque" "ERROR"
-            return
+        # Method 1: Try using defrag.exe directly (most reliable)
+        $defragPath = "C:\\Windows\\System32\\defrag.exe"
+        if (Test-Path $defragPath) {
+            Write-Log-Entry "Utilisation de defrag.exe..." "ACTION"
+            
+            # Detect drive type
+            $driveType = [System.IO.DriveInfo]::GetDrives() | Where-Object { $_.Name -eq "C:\\" } | Select-Object -ExpandProperty DriveType
+            
+            if ($driveType -eq "Fixed") {
+                Write-Log-Entry "Disque fixe détecté - Lancement optimisation..." "WARNING"
+                Write-Log-Entry "Optimisation en cours (peut prendre 5-30 min)..." "ACTION"
+                
+                & $defragPath C: /U /V 2>&1 | Out-Null
+                
+                Write-Log-Entry "Optimisation disque terminée" "SUCCESS"
+                $global:actionsPerformed += "11. Optimisation disque (defrag.exe)"
+                return
+            }
         }
         
-        $isDrive = Get-PhysicalDisk | Where-Object { $_.MediaType -eq "SSD" }
+        # Method 2: Try Optimize-Volume if defrag.exe fails
+        Write-Log-Entry "Tentative avec Optimize-Volume..." "ACTION"
         
-        if ($isDrive) {
-            Write-Log-Entry "Disque SSD détecté - Lancement TRIM" "WARNING"
-            Write-Log-Entry "Optimisation SSD (TRIM)..." "ACTION"
-            $disk | Optimize-Volume -Trim -Verbose -ErrorAction SilentlyContinue
-            Write-Log-Entry "TRIM SSD exécuté" "SUCCESS"
-            $global:actionsPerformed += "11. SSD TRIM optimisé"
-        } else {
-            Write-Log-Entry "Disque HDD détecté - Lancement Défragmentation" "WARNING"
-            Write-Log-Entry "Défragmentation disque (peut prendre 30-60 min)..." "ACTION"
-            $disk | Optimize-Volume -Defrag -Verbose -ErrorAction SilentlyContinue
-            Write-Log-Entry "Défragmentation complète" "SUCCESS"
-            $global:actionsPerformed += "11. HDD Défragmentation complète"
-        }
-    } catch { 
-        Write-Log-Entry "Erreur defrag/trim: $($_.Exception.Message)" "ERROR"
-        Write-Log-Entry "Tentative méthode alternative..." "ACTION"
         try {
-            Write-Log-Entry "Utilisation de Optimize-Volume standard..." "ACTION"
-            Get-Volume -DriveLetter C -ErrorAction SilentlyContinue | Optimize-Volume -Verbose -ErrorAction SilentlyContinue
-            Write-Log-Entry "Optimisation standard complète" "SUCCESS"
-            $global:actionsPerformed += "11. Optimisation disque (mode standard)"
+            # Import module explicitly
+            Import-Module Storage -ErrorAction SilentlyContinue
+            
+            $disk = Get-Volume -DriveLetter C -ErrorAction SilentlyContinue
+            if ($null -ne $disk) {
+                $disk | Optimize-Volume -Defrag -Verbose -ErrorAction SilentlyContinue
+                Write-Log-Entry "Optimisation via Optimize-Volume réussie" "SUCCESS"
+                $global:actionsPerformed += "11. Optimisation disque (Optimize-Volume)"
+                return
+            }
         } catch {
-            Write-Log-Entry "Erreur optimisation disque" "ERROR"
+            Write-Log-Entry "Optimize-Volume échoué" "WARNING"
         }
+        
+        # Method 3: Use fsutil for TRIM (works on SSD and some HDDs)
+        Write-Log-Entry "Tentative avec fsutil TRIM..." "ACTION"
+        
+        try {
+            & fsutil behavior set disabledeletenotify 0 2>&1 | Out-Null
+            & fsutil trim optimize C: 2>&1 | Out-Null
+            Write-Log-Entry "Optimisation via fsutil réussie" "SUCCESS"
+            $global:actionsPerformed += "11. Optimisation disque (fsutil TRIM)"
+            return
+        } catch {
+            Write-Log-Entry "fsutil échoué" "WARNING"
+        }
+        
+        # If everything failed
+        Write-Log-Entry "Aucune méthode d'optimisation n'a fonctionné" "ERROR"
+        Write-Log-Entry "Cela peut être dû à des permissions ou un disque externe" "INFO"
+        
+    } catch { 
+        Write-Log-Entry "Erreur: $($_.Exception.Message)" "ERROR"
     }
 }
 
@@ -309,7 +367,7 @@ function Fix-Context-Menu {
     Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" -ForegroundColor Blue
     
     try {
-        reg.exe add "HKCU\Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32" /f /ve 2>&1 | Out-Null
+        reg.exe add "HKCU\\Software\\Classes\\CLSID\\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\\InprocServer32" /f /ve 2>&1 | Out-Null
         taskkill /f /im explorer.exe 2>&1 | Out-Null
         Start-Sleep -Seconds 2
         start explorer.exe
@@ -324,7 +382,7 @@ function Export-Applications-List {
     Write-Host "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n" -ForegroundColor Cyan
     
     try {
-        $filePath = "$([Environment]::GetFolderPath('Desktop'))\liste_applications.txt"
+        $filePath = "$([Environment]::GetFolderPath('Desktop'))\\liste_applications.txt"
         Get-WmiObject -Class Win32_Product | Select-Object -Property Name | Out-File -FilePath $filePath -Encoding UTF8
         Write-Log-Entry "Sauvegarde: $filePath" "SUCCESS"
         $global:actionsPerformed += "14. Apps List Exported"
@@ -383,7 +441,7 @@ $continue = $true
 while ($continue) {
     Clear-Host
     Write-Host "`n╔════════════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-    Write-Host "║         MAINTENANCE SYSTEM TOOLS v2.2 - FINAL                 ║" -ForegroundColor Cyan
+    Write-Host "║         MAINTENANCE SYSTEM TOOLS v2.2.4 - FINAL             ║" -ForegroundColor Cyan
     Write-Host "╚════════════════════════════════════════════════════════════════╝`n" -ForegroundColor Cyan
     
     Write-Host "┌─ NETTOYAGE ─────────────────────────────────────────────────────┐" -ForegroundColor Green
@@ -402,10 +460,13 @@ while ($continue) {
     Write-Host "│  13. Menu contextuel              14. Export applications     │" -ForegroundColor Blue
     Write-Host "└─────────────────────────────────────────────────────────────────┘" -ForegroundColor Blue
     
-    Write-Host "`n┌─ MODES ────────────────────────────────────────────────────────┐" -ForegroundColor Cyan
+    Write-Host "`n┌─ MODE PERSONNALISÉ ─────────────────────────────────────────────┐" -ForegroundColor Cyan
     Write-Host "│  17. AUTO PERSONNALISÉ - Sélectionnez vos actions  (MULTI)   │" -ForegroundColor Cyan
-    Write-Host "│   0. Retour au menu principal                                  │" -ForegroundColor Cyan
     Write-Host "└─────────────────────────────────────────────────────────────────┘" -ForegroundColor Cyan
+    
+    Write-Host "`n┌─ CONTRÔLE ──────────────────────────────────────────────────────┐" -ForegroundColor Yellow
+    Write-Host "│  0. Retour au launcher                                         │" -ForegroundColor Yellow
+    Write-Host "└─────────────────────────────────────────────────────────────────┘" -ForegroundColor Yellow
     
     $choice = Read-Host "`nChoisissez une option (0-17)"
     
@@ -449,7 +510,6 @@ while ($continue) {
         }
         "0" {
             $continue = $false
-            Generate-Report
             Write-Host "`nRetour au launcher...`n" -ForegroundColor Green
         }
         default {

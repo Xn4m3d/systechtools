@@ -1,7 +1,9 @@
 # ============================================================================
 # JITTER ANALYZER - Network Latency & Stability Test
-# Version: 2.2.1
+# Version: 2.2.2
 # ============================================================================
+
+Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
 
 param(
     [string]$ComputerName = $null,
@@ -45,13 +47,38 @@ function Check-Escape-Key {
     return $false
 }
 
-function Get-User-Input-With-Escape {
-    param([string]$Prompt)
+function Get-User-Input-With-Validation {
+    param(
+        [string]$Prompt,
+        [string]$DefaultValue,
+        [string]$InputType = "String"
+    )
     
     Write-Host "   → $Prompt" -ForegroundColor Gray -NoNewline
     Write-Host " (ou ESC pour retour)" -ForegroundColor Yellow
     
     $input = Read-Host ""
+    
+    # Check for ESC (via empty input simulation - ESC returns null)
+    if ($null -eq $input) {
+        return $null
+    }
+    
+    # If user pressed ENTER without input, use default
+    if ([string]::IsNullOrWhiteSpace($input)) {
+        return $DefaultValue
+    }
+    
+    # If integer input expected, try to convert
+    if ($InputType -eq "Integer") {
+        try {
+            return [int]$input
+        } catch {
+            Write-Host "   ⚠ Valeur invalide, utilisation défaut: $DefaultValue" -ForegroundColor Yellow
+            return $DefaultValue
+        }
+    }
+    
     return $input
 }
 
@@ -63,48 +90,30 @@ function Show-Interactive-Menu {
     Write-Host "📝 TEST CONFIGURATION" -ForegroundColor Yellow
     Write-Host "════════════════════════════════════════════════════════════════`n" -ForegroundColor Yellow
     
-    # Check for ESC at start
-    if (Check-Escape-Key) {
-        return $null
-    }
-    
-    # Target input
+    # Target input with validation
     Write-Host "1️⃣  Target (hostname or IP address)" -ForegroundColor Cyan
     Write-Host "   Default: $defaultComputer" -ForegroundColor Gray
-    $computer = Get-User-Input-With-Escape "Votre choix"
+    $computer = Get-User-Input-With-Validation "Your choice" $defaultComputer "String"
     if ($null -eq $computer) {
-        return $null
-    }
-    if ([string]::IsNullOrWhiteSpace($computer)) {
-        $computer = $defaultComputer
+        return $null  # ESC pressed
     }
     
     # Ping count input
     Write-Host ""
     Write-Host "2️⃣  Number of ping attempts" -ForegroundColor Cyan
     Write-Host "   Default: $defaultCount" -ForegroundColor Gray
-    $countInput = Get-User-Input-With-Escape "Votre choix"
-    if ($null -eq $countInput) {
-        return $null
-    }
-    if ([string]::IsNullOrWhiteSpace($countInput)) {
-        $count = $defaultCount
-    } else {
-        try { $count = [int]$countInput } catch { $count = $defaultCount }
+    $count = Get-User-Input-With-Validation "Your choice" $defaultCount "Integer"
+    if ($null -eq $count) {
+        return $null  # ESC pressed
     }
     
     # Buffer size input
     Write-Host ""
     Write-Host "3️⃣  Buffer size (bytes)" -ForegroundColor Cyan
     Write-Host "   Default: $defaultBuffer" -ForegroundColor Gray
-    $bufferInput = Get-User-Input-With-Escape "Votre choix"
-    if ($null -eq $bufferInput) {
-        return $null
-    }
-    if ([string]::IsNullOrWhiteSpace($bufferInput)) {
-        $buffer = $defaultBuffer
-    } else {
-        try { $buffer = [int]$bufferInput } catch { $buffer = $defaultBuffer }
+    $buffer = Get-User-Input-With-Validation "Your choice" $defaultBuffer "Integer"
+    if ($null -eq $buffer) {
+        return $null  # ESC pressed
     }
     
     return @{
