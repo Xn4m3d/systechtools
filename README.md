@@ -1,397 +1,401 @@
-# SYSTECHTOOLS - Suite de Maintenance Système v2.1+
+# 🔧 Maintenance Système v2.2 - Guide Complet
 
-Suite de scripts PowerShell pour la maintenance, le diagnostic et l'optimisation avancée de systèmes Windows.
-
----
-
-## 📋 Contenu du Projet
-
-### Scripts Disponibles
-
-#### **menu-selector.ps1**
-Menu centralisé pour exécuter tous les scripts disponibles.
-
-**Fonctionnalités :**
-- Lance les scripts via GitHub RAW URLs
-- Interface interactive avec numérotation
-- Exécution à distance (one-liner possible)
-- Menu en boucle continu
-
-**Utilisation :**
-```powershell
-.\menu-selector.ps1
-```
-
-Ou directement depuis GitHub (one-liner) :
-```powershell
-Invoke-Expression ((New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/Xn4m3d/systechtools/refs/heads/main/menu-selector.ps1'))
-```
+Un script PowerShell professionnel pour optimiser et maintenir votre système Windows. Navigation au clavier, multi-sélection et mode personnalisé.
 
 ---
 
-#### **maintenance-system.ps1** ⭐
-Script complet de maintenance système avec 17 options et mode auto personnalisé.
+## 📋 Table des Matières
 
-**NETTOYAGE (6 options) :**
-- 1️⃣ Fichiers temporaires (Temp, AppData, $env:TEMP)
-- 2️⃣ Cache Windows Update
-- 3️⃣ Spool Imprimante
-- 4️⃣ Corbeille
-- 5️⃣ Disk Cleanup
-- 6️⃣ **AUTO** - Tous les nettoyages
+- [Installation](#installation)
+- [Utilisation](#utilisation)
+- [Options Détaillées](#options-détaillées)
+- [Mode Auto Personnalisé](#mode-auto-personnalisé)
+- [FAQ](#faq)
 
-**RÉPARATION (4 options) :**
-- 7️⃣ SFC /scannow (Réparation fichiers système - 15-30 min)
-- 8️⃣ DISM RestoreHealth + ComponentCleanup
-- 9️⃣ Repair-AppxPackages (Packages Microsoft Store)
-- 🔟 **AUTO** - Toutes les réparations
+---
 
-**OPTIMISATION (4 options) :**
-- 1️⃣1️⃣ Défragmentation/TRIM (détection HDD vs SSD automatique)
-- 1️⃣2️⃣ Vidage journaux d'événements (System, Application, Security)
-- 1️⃣3️⃣ Réparation menu contextuel Windows
-- 1️⃣4️⃣ Export liste applications (fichier sur Bureau)
+## 🚀 Installation
 
-**OUTILS EXTERNES (2 options) :**
-- 1️⃣5️⃣ MASS GRAVE ACTIVATION - Outil d'activation Windows
-- 1️⃣6️⃣ WinUtil - Suite complète d'optimisation Windows
+### Prérequis
+- Windows 7+ (recommandé Windows 10/11)
+- Droits administrateur
+- PowerShell 5.0+
 
-**MODE PERSONNALISÉ :**
-- 1️⃣7️⃣ **AUTO PERSONNALISÉ** - Sélectionnez vos actions et lancez un auto mode pré-configuré
-- 0️⃣ Quitter
-
-**Caractéristiques Avancées :**
-- ✅ Vérification automatique des privilèges administrateur
-- ✅ Logging détaillé avec timestamps (INFO, SUCCESS, WARNING, ERROR, ACTION)
-- ✅ Rapport de synthèse avec durée d'exécution
-- ✅ Gestion des erreurs robuste et non-bloquante
-- ✅ Détection automatique HDD vs SSD pour optimisation
-- ✅ Mode auto personnalisé avec pré-configuration interactif
-- ✅ Anticipation des choix utilisateur avant lancement automatique
-- ✅ Support d'actions individuelles ou combinées
-
-**Utilisation :**
+### Lancement
 ```powershell
+# Télécharger le script
+# Clic droit → Exécuter avec PowerShell
+# OU en PowerShell Admin:
 .\maintenance-system.ps1
 ```
 
-**Résultats attendus (Mode AUTO) :**
-- 5-100 GB libérés selon l'état du système
-- Fichiers système réparés
-- Image Windows restaurée
-- Disque optimisé
-- Journal récapitulatif avec durée
+**Attention**: Le script demandera automatiquement les droits admin s'il ne les possède pas.
 
 ---
 
-#### **jitter.ps1** ⭐
-Analyseur professionnel de latence réseau et stabilité de connexion.
+## 📖 Utilisation
 
-**Fonctionnalités :**
-- Analyse jitter avec menu interactif complet
-- Calcul écart-type (jitter) en millisecondes
-- Statistiques complètes (min, max, moyenne)
-- Évaluation automatique de qualité (4 niveaux)
-- Bannière artistique en Unicode/couleurs
-- Support mode paramétré ou interactif
-- Recommandations selon le jitter (jeux, vidéo, appels, etc.)
+### Navigation
+- **Flèches ↑↓**: Naviguer entre les options
+- **Entrée**: Sélectionner une option
+- **Espace**: Cocher/Décocher (en mode multi-sélection)
+- **ESC**: Annuler (en mode multi-sélection)
 
-**Paramètres:**
-- Cible réseau (IP ou hostname) - défaut: 8.8.8.8
-- Nombre de tentatives - défaut: 100
-- Taille buffer - défaut: 1250 bytes
+### Écrans Principaux
 
-**Utilisation Interactif :**
-```powershell
-.\jitter.ps1
+**Menu Principal**
+```
+Choisissez une option (0-17)
 ```
 
-**Utilisation Paramétré :**
-```powershell
-.\jitter.ps1 -ComputerName "192.168.1.1" -Count 50 -BufferSize 2048
+**Mode Auto Personnalisé (Option 17)**
 ```
-
-**Rapport Qualité :**
-- 🟢 **Excellente** (< 5ms) : Jeux compétitifs, transactions
-- 🔵 **Bonne** (5-15ms) : Streaming HD, vidéo, navigation
-- 🟡 **Moyenne** (15-30ms) : Lag occasionnel, buffering possible
-- 🔴 **Instabilité** (> 30ms) : Déconnexions fréquentes
-
----
-
-## 🔗 Outils Externes Intégrés
-
-Le menu de maintenance peut lancer directement deux outils externes populaires :
-
-### MASS GRAVE ACTIVATION
-Outil d'activation Windows rapide et simple.
-- **Utilisation directe :** `irm https://get.activated.win | iex`
-- **Via SYSTECHTOOLS :** Option 15 du menu maintenance-system.ps1
-- Lancement sécurisé avec confirmation
-- Exécution dans nouvelle fenêtre PowerShell élevée
-
-### WinUtil
-Suite complète d'optimisation et de tweaks Windows développée par Chris Titus Tech.
-- **Utilisation directe :** `irm https://christitus.com/win | iex`
-- **Via SYSTECHTOOLS :** Option 16 du menu maintenance-system.ps1
-- Interface graphique complète
-- 100+ optimisations disponibles
-- Configurations de gaming, privacy, performance, etc.
-
----
-
-## 🛠️ Installation
-
-### Option 1 : Clonage Git
-```bash
-git clone https://github.com/Xn4m3d/systechtools.git
-cd systechtools
-```
-
-### Option 2 : Téléchargement direct
-Téléchargez les fichiers `.ps1` depuis le dépôt.
-
----
-
-## 📋 Configuration Requise
-
-- **Windows :** 7/10/11 ou Server 2012+
-- **PowerShell :** 3.0+ (PowerShell 5.1+ recommandé pour AppX)
-- **Privilèges :** Administrateur (requis pour la plupart des opérations)
-
----
-
-## ▶️ Exécution
-
-### Mode Local
-```powershell
-Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
-.\menu-selector.ps1
-```
-
-### Mode Distant (GitHub - One-liner)
-```powershell
-Invoke-Expression ((New-Object Net.WebClient).DownloadString('https://raw.githubusercontent.com/Xn4m3d/systechtools/refs/heads/main/menu-selector.ps1'))
-```
-
-### Dépannage : "Cannot be loaded. The file is not digitally signed"
-
-**Solution 1 (Temporaire - Recommandée) :**
-```powershell
-Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process -Force
-.\maintenance-system.ps1
-```
-
-**Solution 2 (Permanente - Utilisateur) :**
-```powershell
-Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope CurrentUser
-.\maintenance-system.ps1
-```
-
-**Solution 3 (Ligne de commande directe) :**
-```powershell
-powershell -ExecutionPolicy Bypass -File ".\maintenance-system.ps1"
+Navigation: FLECHES ↑↓ | Selection: ESPACE | Valider: ENTREE | Annuler: ESC
 ```
 
 ---
 
-## 📊 Cas d'Usage
+## 🔍 Options Détaillées
 
-### Mode Auto Personnalisé - Flux Complet
+### 🟢 NETTOYAGE
 
-```powershell
-# 1. Lancer le script
-.\maintenance-system.ps1
+#### **Option 1: Fichiers temporaires**
+**Action**: Supprime tous les fichiers temporaires
+- Vide `C:\Windows\Temp\*`
+- Vide `C:\Users\*\AppData\Local\Temp\*`
+- Vide `%TEMP%\*`
 
-# 2. Sélectionner option 17 (AUTO PERSONNALISE)
+**Espace libéré**: Généralement 100 MB à 5 GB
 
-# 3. Menu de sélection des actions
-# Exemple: "1,2,3,6,11,12" pour sélectionner plusieurs actions
+---
 
-# 4. Pré-configuration interactive
-# Le script demande les confirmations nécessaires AVANT de lancer l'auto mode:
-# - Confirmation SFC (peut prendre 15-30 min)
-# - Confirmation MASS GRAVE ACTIVATION
-# - Confirmation WinUtil
+#### **Option 2: Cache Windows Update**
+**Actions**:
+1. Arrête les services Windows Update (wuauserv, bits)
+2. Vide le cache `C:\Windows\SoftwareDistribution\*`
+3. Redémarre les services
 
-# 5. Lancement automatique
-# Une fois configuré, l'auto mode s'exécute seul sans interruption
+**Espace libéré**: Généralement 100 MB à 2 GB
 
-# 6. Rapport final avec durée totale
+**Durée**: ~30 secondes
+
+---
+
+#### **Option 3: Spool Imprimante**
+**Actions**:
+1. Arrête le service Spooler
+2. Vide `C:\Windows\System32\spool\PRINTERS\*`
+3. Redémarre le service Spooler
+
+**Utilité**: Répare les problèmes d'impression, libère de l'espace
+
+**Espace libéré**: Généralement 10 MB à 500 MB
+
+---
+
+#### **Option 4: Corbeille**
+**Action**: Vide complètement la corbeille Windows
+
+**Espace libéré**: Variable selon contenu
+
+**Durée**: Quelques secondes
+
+---
+
+#### **Option 5: Disk Cleanup**
+**Actions**: Nettoie les répertoires système non essentiels
+- Vide `C:\Windows\Prefetch\*`
+- Vide `C:\Windows\System32\dllcache\*`
+- Vide `C:\ProgramData\Package Cache\*`
+
+**Espace libéré**: Généralement 50 MB à 1 GB
+
+---
+
+#### **Option 6: AUTO - Tous les nettoyages**
+**Actions**: Exécute automatiquement les options 1 + 2 + 3 + 4 + 5
+
+**Durée totale**: ~1-2 minutes
+
+**Espace libéré total**: Généralement 500 MB à 10 GB
+
+---
+
+### 🔧 RÉPARATION
+
+#### **Option 7: SFC (Réparation fichiers)**
+**Action**: Lance `sfc /scannow` (System File Checker)
+- Scanne les fichiers système
+- Répare les fichiers corrompus automatiquement
+- Nécessite une connexion Internet
+
+**Durée**: 15-30 minutes ⏱️
+
+**Impact**: Critique pour la stabilité Windows
+
+---
+
+#### **Option 8: DISM (Réparation image)**
+**Actions**:
+1. Lance `DISM /Online /Cleanup-Image /RestoreHealth`
+2. Lance `DISM /Online /Cleanup-Image /StartComponentCleanup`
+
+**Utilité**: Répare l'image Windows complète
+
+**Durée**: 10-20 minutes
+
+**Impact**: Corrige les problèmes profonds de Windows
+
+---
+
+#### **Option 9: Packages AppX**
+**Action**: Répare tous les packages Microsoft (Store, Mail, etc.)
+
+**Utilité**: Répare les applications Windows cassées
+
+**Durée**: 2-5 minutes
+
+---
+
+#### **Option 10: AUTO - Toutes les réparations**
+**Actions**: Exécute automatiquement les options 7 + 8 + 9
+
+**Durée totale**: 30-50 minutes ⏱️
+
+**Impact**: Restaure la stabilité complète de Windows
+
+---
+
+### ⚡ OPTIMISATION
+
+#### **Option 11: Defrag/TRIM**
+**Actions**:
+- **Pour SSD**: Lance TRIM (optimisation SSD)
+- **Pour HDD**: Lance défragmentation complète
+
+**Détection automatique** du type de disque
+
+**Durée SSD**: ~2-5 minutes
+
+**Durée HDD**: ~30-60 minutes
+
+**Impact**: Améliore les performances de 10-30%
+
+---
+
+#### **Option 12: Journaux d'événements**
+**Actions**: Vide les journaux Windows
+- Vide le journal "System"
+- Vide le journal "Application"
+- Vide le journal "Security"
+
+**Espace libéré**: Généralement 50 MB à 500 MB
+
+**Durée**: ~5 secondes
+
+---
+
+#### **Option 13: Menu contextuel**
+**Actions**:
+1. Répare la clé de registre du menu clic droit
+2. Redémarre l'Explorateur Windows
+
+**Utilité**: Répare les problèmes "Envoyer vers", clics droits cassés
+
+**Durée**: ~5 secondes
+
+---
+
+#### **Option 14: Export applications**
+**Action**: Exporte la liste de toutes les applications installées
+
+**Sortie**: Fichier `liste_applications.txt` sur le Bureau
+
+**Utilité**: Sauvegarde les logiciels installés, utile pour réinstallation
+
+---
+
+### 🔴 OUTILS EXTERNES
+
+#### **Option 15: MASS GRAVE ACTIVATION**
+**Action**: Lance l'outil d'activation Windows MASS GRAVE
+- Télécharge et exécute depuis Internet
+- S'ouvre dans une nouvelle fenêtre PowerShell
+
+**Utilité**: Active Windows (pour versions non activées)
+
+**Note**: Outils tiers - À utiliser à vos risques
+
+---
+
+#### **Option 16: WinUtil**
+**Action**: Lance WinUtil - Suite complète d'optimisation Windows
+- Télécharge depuis christitus.com
+- S'ouvre dans une nouvelle fenêtre PowerShell
+
+**Utilité**: Interface graphique pour optimisation avancée
+
+---
+
+### 🎯 MODE PERSONNALISÉ
+
+#### **Option 17: AUTO PERSONNALISE**
+**Fonctionnalité**: Menu multi-sélection pour choisir vos actions
+
+**Actions disponibles dans ce mode**:
+1. Fichiers temporaires
+2. Cache Windows Update
+3. Spool Imprimante
+4. Corbeille
+5. Disk Cleanup
+6. SFC (Réparation fichiers)
+7. DISM
+8. AppX
+9. Defrag/TRIM
+10. Journaux d'événements
+
+**Note**: Les options 13 (Menu) et 14 (Export) ne sont PAS disponibles en mode auto (lancez-les individuellement)
+
+**Flux**:
+1. Sélectionner option 17
+2. Cocher les actions avec ESPACE
+3. Valider avec ENTREE
+4. Confirmer les actions longues (SFC, MASS GRAVE, WinUtil)
+5. Lancement automatique
+
+---
+
+### ⏹️ CONTRÔLE
+
+#### **Option 0: Quitter**
+**Action**: Génère un rapport final et quitte le script
+
+**Rapport affiche**:
+- ✓ Actions effectuées
+- ✗ Erreurs rencontrées
+- ⏱️ Durée totale d'exécution
+
+---
+
+## 🔄 Mode Auto Personnalisé - Guide Détaillé
+
+### Sélection
+```
+Navigation: FLECHES ↑↓ | Selection: ESPACE | Valider: ENTREE | Annuler: ESC
+
+► [ ] 1. Fichiers temporaires
+  [ ] 2. Cache Windows Update
+  [✓] 3. Spool Imprimante
+  ...
+
+Selectionnees: 1 option(s)
 ```
 
-### PC Problématique avec Espace Disque Plein - Preset Rapide
+### Pré-Configuration
+Avant le lancement, le script demande confirmation pour:
+- **Option 7 (SFC)**: "Duree: 15-30 minutes - Confirmer? (O/N)"
+- **Option 15 (MASS GRAVE)**: "Activation Windows - Confirmer? (O/N)"
+- **Option 16 (WinUtil)**: "Interface graphique - Confirmer? (O/N)"
 
-```powershell
-# 1. Lancer le script
-.\maintenance-system.ps1
+### Lancement
+Les actions s'exécutent automatiquement, le rapport final s'affiche à la fin.
 
-# 2. Sélectionner les nettoyages rapides: "1,2,3,4,5"
-# Résultat : 10-50 GB libérés typiquement
+---
 
-# OU pour maintenance complète: "1,2,3,4,5,7,8,11,12"
-# Résultat : 20-100 GB libérés + réparations + optimisation
+## 📊 Gains Typiques
+
+### Espace libéré
+- **Nettoyage complet**: 1-10 GB
+- **Après DISM**: 2-5 GB supplémentaires
+- **Après Defrag**: Pas d'espace mais +10-30% vitesse
+
+### Temps
+- **Nettoyage complet**: 2-3 minutes
+- **Réparation complète**: 50-60 minutes
+- **Optimisation disque**: 30-120 minutes (selon taille)
+
+---
+
+## ❓ FAQ
+
+### Q: Le script nécessite les droits admin?
+**A**: Oui, tous les droits admin sont nécessaires. Le script les demande automatiquement au démarrage.
+
+### Q: Puis-je annuler en cours d'exécution?
+**A**: Non, une fois lancée, une action se poursuit. Mais chaque action est indépendante.
+
+### Q: Les données seront-elles supprimées?
+**A**: Seulement les fichiers temporaires et caches. Les données utilisateur ne sont jamais touchées.
+
+### Q: Combien d'espace vais-je libérer?
+**A**: Entre 500 MB et 20 GB selon votre système. Les mises à jour Windows prennent beaucoup d'espace.
+
+### Q: Est-ce dangereux?
+**A**: Non. Les actions sont sûres et recommandées par Microsoft. Les erreurs sont loggées.
+
+### Q: Faut-il redémarrer après?
+**A**: Pas obligatoire, mais recommandé après SFC ou DISM pour pleine efficacité.
+
+### Q: SFC dit "intégrité partiellement intégrée"?
+**A**: C'est normal si Windows ne peut réparer certains fichiers. Peut nécessiter une réinstallation Windows.
+
+---
+
+## 📝 Exemple d'Utilisation
+
+```
+Choisissez une option (0-17): 17
+
+[Menu de sélection]
+Navigation: FLECHES ↑↓ | Selection: ESPACE | Valider: ENTREE
+
+► [ ] 1. Fichiers temporaires
+  [ ] 2. Cache Windows Update
+  [ ] 3. Spool Imprimante
+  ...
+
+[Appuyer ESPACE sur option 1]
+
+► [✓] 1. Fichiers temporaires
+  [ ] 2. Cache Windows Update
+
+[Appuyer ENTREE pour valider]
+
+╔════════════════════════════════════════════════════════════════╗
+║           PRE-CONFIGURATION AVANT LANCEMENT                    ║
+╚════════════════════════════════════════════════════════════════╝
+
+Appuyez ENTREE pour lancer
+
+═══════════════════════════════════════════════════════════════
+
+1. NETTOYAGE FICHIERS TEMPORAIRES
+
+OK Temp nettoy: 2.5 GB
+
+[Fin]
+
+Rapport Final:
+✓ Actions: 1
+  ├─ 1. Nettoyage Temp: 2.5 GB
+
+Duree: 0m 15s
 ```
 
-### Test de Stabilité Réseau
-
-```powershell
-# Mode interactif
-.\jitter.ps1
-
-# Ou directement :
-.\jitter.ps1 -ComputerName "8.8.8.8" -Count 100 -BufferSize 1250
-
-# Rapport : Latence, Jitter, Recommandations
-```
-
 ---
 
-## 🔧 Architecture et Structure
+## 📞 Support
 
-### Gestion des Erreurs
-- Try-catch sur toutes les opérations critiques
-- Logging détaillé des erreurs
-- Pas d'interruption du flux pour erreurs non-bloquantes
-
-### Logging Système
-- 5 types : INFO, SUCCESS, WARNING, ERROR, ACTION
-- Timestamps formatés (YYYY-MM-DD HH:MM:SS)
-- Affichage coloré en temps réel
-- Rapport synthétisé en fin d'exécution
-
-### Privilèges
-- Vérification automatique au démarrage
-- Re-lancement avec privilèges administrateur si nécessaire
-- Message d'erreur clair si droits insuffisants
-
-### Mode Auto Personnalisé
-- Sélection interactive d'actions (comma-separated)
-- Pré-configuration des choix utilisateur
-- Exécution sans interruption une fois lancée
-- Logging complet de toutes les actions
-- Rapport final détaillé
-
----
-
-## 🚀 Fonctionnalités Avancées
-
-### Gestion Utilisateurs (Via Menu Principal)
-- Créer utilisateurs locaux
-- Supprimer utilisateurs
-- Ajouter au groupe Administrateurs
-- Désactiver utilisateurs
-- Changer mot de passe
-- Voir utilisateurs connectés
-
-### Optimisation Intelligente (Option 11)
-- Détection automatique HDD vs SSD
-- Défragmentation pour HDD
-- TRIM optimisé pour SSD
-- Gestion des services Windows associés
-
-### Outils Externes (Options 15-16)
-- MASS GRAVE ACTIVATION : Activation rapide Windows
-- WinUtil : Interface graphique complète avec 100+ optimisations
-
-### Mode Auto Personnalisé (Option 17)
-- Sélection à la carte des actions à exécuter
-- Pré-configuration interactive avant le lancement
-- Anticipation des choix utilisateur
-- Exécution automatique sans interruption
-- Possibilité de combiner nettoyage, réparation, optimisation et outils externes
-
----
-
-## 📈 Améliorations Futures Envisagées
-
-- 📝 Sauvegarde des rapports en fichier (texte + CSV)
-- 📊 Graphiques de statistiques disque
-- ⏰ Scheduling automatique (tâches planifiées)
-- 📧 Notification email de résultats
-- 🔄 Versionning des rapports
-- 🌐 Interface Web de monitoring
-- 🐍 Version Python pour Linux/macOS
-- 💾 Profils sauvegardés pour modes auto récurrents
-
----
-
-## 🔒 Notes de Sécurité
-
-⚠️ **Important :**
-- Ces scripts **modifient le système** - testez d'abord en environnement contrôlé
-- Les modes AUTO exécutent des opérations substantielles **selon votre configuration**
-- **Sauvegardez les données critiques** avant utilisation
-- Toujours exécuter depuis **PowerShell en administrateur**
-- Scripts téléchargés : vérifiez le contenu avant exécution
-- Outils externes : demande de confirmation explicite avant lancement
-- SFC peut prendre 15-30 min : confirmez avant de lancer
-
----
-
-## 📝 Changelog
-
-### v2.1+
-
-**maintenance-system.ps1 :**
-- ✅ 6 options de nettoyage (était 5)
-- ✅ 4 options de réparation (était 3) - ajout AppX
-- ✅ 4 options d'optimisation (était 2) - menu contextuel, export apps
-- ✅ 2 options d'outils externes - MASS GRAVE ACTIVATION, WinUtil
-- ✅ Total : 17 options (était 11)
-- ✅ **NOUVEAU : Mode auto personnalisé (Option 17)**
-- ✅ Pré-configuration interactive des actions
-- ✅ Logging amélioré
-- ✅ Nettoyage Spool imprimante
-- ✅ Gestion utilisateurs complète
-- ✅ Réparation menu contextuel
-- ✅ Exécution automatique sans interruption après configuration
-
-**jitter.ps1 :**
-- ✅ Refonte complète de l'interface
-- ✅ Menu interactif 3-questions
-- ✅ Calcul professionnel jitter
-- ✅ Analyse qualité 4 niveaux
-- ✅ Support mode paramétré
-- ✅ Bannière artistique
-
-**Autres :**
-- ✅ Version indiquée v2.1+ dans scripts
-- ✅ Meilleure structure générale
-- ✅ Documentation améliorée
-- ✅ Correction dénomination "MASS GRAVE ACTIVATION"
-- ✅ Support mode auto personnalisé
-
-### v2.0
-- Menu centralisé basique
-- Modes AUTO par catégorie
-- Défragmentation intégrée
-- Vidage journaux
-- Rapport de synthèse
-
-### v1.0
-- Scripts de base
-- SFC et DISM
-- Nettoyage fichiers temporaires
-
----
-
-## 💬 Support et Contribution
-
-Pour signaler des bugs ou proposer des améliorations :
-1. Créez une **issue** sur GitHub
-2. Testez les scripts en environnement contrôlé
-3. Proposez des **pull requests**
+Pour les bugs, suggestions, ou améliorations:
+- Ouvrir une issue sur GitHub
+- Vérifier les logs dans le rapport final
 
 ---
 
 ## 📄 Licence
 
-Libre d'utilisation pour usage personnel et professionnel.
+Licence publique - Libre d'utilisation
 
 ---
 
-## 👤 Auteur
-
-**Xn4m3d**
-- GitHub: https://github.com/Xn4m3d/systechtools
+**Maintenance Système v2.2** - Optimisez votre Windows! 🚀
