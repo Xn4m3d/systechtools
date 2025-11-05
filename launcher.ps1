@@ -66,8 +66,8 @@ function Download-And-Execute-Script {
             return $false
         }
         
-        Write-Host "Telechargement reussi" -ForegroundColor Green
-        Write-Host "Execution du script..." -ForegroundColor Green
+        Write-Host "Telechargement OK" -ForegroundColor Green
+        Write-Host "Execution..." -ForegroundColor Green
         Write-Host ""
         
         Invoke-Expression $scriptContent
@@ -79,9 +79,9 @@ function Download-And-Execute-Script {
         Write-Host "Erreur: $($_.Exception.Message)" -ForegroundColor Red
         Write-Host ""
         Write-Host "Verifiez:" -ForegroundColor Yellow
-        Write-Host "  - Votre connexion Internet" -ForegroundColor Yellow
-        Write-Host "  - L'URL: $repoUrl" -ForegroundColor Yellow
-        Write-Host "  - Le script: $ScriptName" -ForegroundColor Yellow
+        Write-Host "  - Connexion Internet" -ForegroundColor Yellow
+        Write-Host "  - URL: $repoUrl" -ForegroundColor Yellow
+        Write-Host "  - Script: $ScriptName" -ForegroundColor Yellow
         Write-Host ""
         Read-Host "Appuyez sur Entree"
         return $false
