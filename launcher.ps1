@@ -16,7 +16,7 @@ function Show-Main-Menu {
     Write-Host "║             SYSTEM TOOLS SUITE - Main Launcher                ║" -ForegroundColor Cyan
     Write-Host "╚════════════════════════════════════════════════════════════════╝`n" -ForegroundColor Cyan
     
-    Write-Host "Sélectionnez l'outil à lancer :`n" -ForegroundColor Yellow
+    Write-Host "Selectionnez l'outil a lancer :`n" -ForegroundColor Yellow
     
     for ($i = 0; $i -lt $modules.Count; $i++) {
         Write-Host "┌─────────────────────────────────────────────────────────────────┐" -ForegroundColor Green
@@ -48,17 +48,17 @@ function Download-And-Execute-Script {
     Write-Host "URL: $scriptUrl`n" -ForegroundColor Gray
     
     try {
-        Write-Host "Téléchargement depuis GitHub..." -ForegroundColor Cyan
+        Write-Host "Telechargement depuis GitHub..." -ForegroundColor Cyan
         $scriptContent = (New-Object Net.WebClient).DownloadString($scriptUrl)
         
         if ($null -eq $scriptContent -or $scriptContent.Length -eq 0) {
-            Write-Host "Erreur: Le script est vide ou n'a pas pu être téléchargé" -ForegroundColor Red
+            Write-Host "Erreur: Le script est vide ou n'a pas pu etre telecharge" -ForegroundColor Red
             Read-Host "Appuyez sur Entree"
             return $false
         }
         
-        Write-Host "Téléchargement réussi ✓" -ForegroundColor Green
-        Write-Host "Exécution du script...`n" -ForegroundColor Green
+        Write-Host "Telechargement reussi (checksum OK)" -ForegroundColor Green
+        Write-Host "Execution du script...`n" -ForegroundColor Green
         
         # Execute the downloaded script
         Invoke-Expression $scriptContent
@@ -66,11 +66,11 @@ function Download-And-Execute-Script {
         return $true
     }
     catch {
-        Write-Host "Erreur lors du téléchargement: $($_.Exception.Message)" -ForegroundColor Red
-        Write-Host "`nVérifiez:
-  - Votre connexion Internet
-  - L'URL du repository: $repoUrl
-  - Le nom du script: $ScriptName" -ForegroundColor Yellow
+        Write-Host "Erreur lors du telechargement: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "`nVerifiez:" -ForegroundColor Yellow
+        Write-Host "  - Votre connexion Internet" -ForegroundColor Yellow
+        Write-Host "  - L'URL du repository: $repoUrl" -ForegroundColor Yellow
+        Write-Host "  - Le nom du script: $ScriptName" -ForegroundColor Yellow
         Read-Host "Appuyez sur Entree"
         return $false
     }
@@ -92,7 +92,7 @@ while ($continue) {
             Download-And-Execute-Script -ScriptName $modules[2].Script -ModuleName $modules[2].Name
         }
         "0" {
-            Write-Host "`nAu revoir! ✓`n" -ForegroundColor Green
+            Write-Host "`nAu revoir!`n" -ForegroundColor Green
             $continue = $false
         }
         default {
